@@ -1,6 +1,11 @@
 # Hacker Grid World
 A client-server game to train and play with remote reinforcement learning in a Hacker Grid World.
 
+<p align="center">
+<img src="images/Screenshot%202023-02-06%20at%2023.31.20.png" width="150" title="hover text">
+
+</p>
+
 # Use
 
     git clone https://github.com/stratosphereips/HackerGridWorld.git
