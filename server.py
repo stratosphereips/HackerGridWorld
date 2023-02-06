@@ -53,6 +53,8 @@ async def handle_new_client(reader, writer):
         data = await reader.read(20)
         message = data.decode()
 
+        myworld.input_key(message)
+
         logger.info(f"Received {message!r} from {addr}")
 
 
@@ -68,6 +70,11 @@ class World(object):
         self.world_conf = confjson.get('world', None)
         self.size_x = self.world_conf.get('size_x', None)
         self.size_y = self.world_conf.get('size_y', None)
+        self.character = {}
+        self.character['icon'] = ":woman:"
+        self.character['x'] = 5 
+        self.character['y'] = 5 
+
 
         # Create the world as a list
         self.world = {}
@@ -136,6 +143,8 @@ class World(object):
         #y_line = 5
         #x_line = 5
         #self.positions[x_line + (y_line * self.size_x)] = ":ghost:"
+        # Character
+        self.positions[self.character['x'] + (self.character['y'] * self.size_x)] = self.character['icon']
 
         self.world["positions"] = self.positions
 
@@ -144,6 +153,22 @@ class World(object):
         Get the world
         """
         return self.world
+
+    def input_key(self, key):
+        """
+        process keys
+        """
+        self.positions[self.character['x'] + (self.character['y'] * self.size_x)] = ":ram:"
+        if "UP" in key:
+            self.character['y'] -= 1
+        elif "DOWN" in key:
+            self.character['y'] += 1
+        elif "RIGHT" in key:
+            self.character['x'] += 1
+        elif "LEFT" in key:
+            self.character['x'] -= 1
+        self.positions[self.character['x'] + (self.character['y'] * self.size_x)] = self.character['icon']
+
 
 
 
