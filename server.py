@@ -33,13 +33,16 @@ async def handle_new_client(reader, writer):
     logger.info(f"Handling data from client {addr}")
 
     # Get a new world
-    world = init_hgw()
+    myworld = World()
+    world = myworld.get_world()
+    
+
 
     while True:
         answer = world
         # Convert world to json before sending
         world_json = json.dumps(world)
-        print(f"Sending: {world_json!r}")
+        logger.info(f"Sending: {world_json!r}")
         writer.write(bytes(str(world_json).encode()))
         await writer.drain()
 
@@ -47,33 +50,101 @@ async def handle_new_client(reader, writer):
         #await asyncio.sleep(1)
         #writer.write(bytes(str(world_json).encode()))
 
-        data = await reader.read(10)
+        data = await reader.read(20)
         message = data.decode()
 
         logger.info(f"Received {message!r} from {addr}")
 
 
-def init_hgw():
+class World(object):
     """
-    Initialize the web server
-    Returns a dictionary
+    Class worl"
     """
-    world_conf = confjson.get('world', None)
-    size_x = world_conf.get('size_x', None)
-    size_y = world_conf.get('size_y', None)
+    def __init__(self):
+        """
+        Initialize the web server
+        Returns a dictionary
+        """
+        self.world_conf = confjson.get('world', None)
+        self.size_x = self.world_conf.get('size_x', None)
+        self.size_y = self.world_conf.get('size_y', None)
 
-    # Create the world as a list
-    world = {}
-    world["size"] = str(size_x) + 'x'+ str(size_y)
-    world["score"] = 100
-    positions = []
-    for pos in range(size_x*size_y):
-        positions.append('')
-    positions[0] = 'ghost'
-    world["positions"] = positions
-    # Fill with some things
+        # Create the world as a list
+        self.world = {}
+        self.world["size"] = str(self.size_x) + 'x'+ str(self.size_y)
+        self.world["score"] = 100
 
-    return world
+        self.positions = []
+        # Fill with empty first
+        #for pos in range(size_x*size_y):
+            #positions.append("")
+
+        """
+        line0 = "XXXXXXXXXX"
+        line1 = "X        X"
+        line2 = "X        X"
+        line3 = "X        X"
+        line4 = "X        X"
+        line5 = "X        X"
+        line6 = "X        X"
+        line7 = "X        X"
+        line8 = "X        X"
+        line9 = "XXXXXXXXXX"
+        positions.extend(list(line0))
+        positions.extend(list(line1))
+        positions.extend(list(line2))
+        positions.extend(list(line3))
+        positions.extend(list(line4))
+        positions.extend(list(line5))
+        positions.extend(list(line6))
+        positions.extend(list(line7))
+        positions.extend(list(line8))
+        positions.extend(list(line9))
+        """
+
+        # To do emoji by emoji
+        # fill top and bottom
+        """
+        top_line = 0
+        bottom_line = 9
+        for x in range(size_x):
+            positions[x + (top_line * size_x)] = ":bus:"
+            positions[x + (bottom_line * size_x)] = ":bus:"
+
+        # Fill vertical borders
+        right_border = 9
+        left_border = 0
+        for y in range(size_y):
+            positions[left_border + (y * 10)] = ":bus:"
+            positions[right_border + (y * 10)] = ":bus:"
+        """
+
+        # Fill the middle rest with emojis
+        #positions[21:28] = [":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:"]
+        self.positions[0:9] = [":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:"]
+        self.positions[10:19] = [":ram:",":locked:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:"]
+        self.positions[20:29] = [":ram:",":man:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:"]
+        self.positions[30:39] = [":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:"]
+        self.positions[40:49] = [":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:"]
+        self.positions[50:59] = [":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:"]
+        self.positions[60:69] = [":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:"]
+        self.positions[70:79] = [":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:"]
+        self.positions[80:89] = [":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:"]
+        self.positions[90:99] = [":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:"]
+
+        # Invidivual emojis
+        #y_line = 5
+        #x_line = 5
+        #self.positions[x_line + (y_line * self.size_x)] = ":ghost:"
+
+        self.world["positions"] = self.positions
+
+    def get_world(self):
+        """
+        Get the world
+        """
+        return self.world
+
 
 
 # Main
@@ -87,7 +158,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--configfile', help='Configuration file.', action='store', required=True, type=str)
 
     args = parser.parse_args()
-    logging.basicConfig(level=logging.DEBUG, format='%(name)s: %(message)s',)
+    logging.basicConfig(level=logging.INFO, format='%(name)s: %(message)s',)
 
     with open(args.configfile, 'r') as jfile:
         confjson = json.load(jfile)
