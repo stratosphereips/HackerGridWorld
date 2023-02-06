@@ -75,7 +75,7 @@ def process_data(data, w):
         world = data['positions']
         len_world = len(world)
       
-        minimum_y = 20
+        minimum_y = 10
         for x in range(size_x):
             for y in range(size_y):
                 w.addstr(y + minimum_y, x, emoji.emojize(str(world[x + (y * 10)])))
