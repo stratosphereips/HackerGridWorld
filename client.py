@@ -9,6 +9,7 @@ import json
 import curses
 import socket
 import time
+import emoji
 
 # Init the curses screen
 #stdscr = curses.initscr()
@@ -40,12 +41,24 @@ def start_client(server, port, w):
         data = sock.recv(1024)
         logger.info(f'Received: {data.decode()!r}')
 
-        process_data(data, w)
+        #print(step)
+        key = process_data(data, w)
+        #print(key)
+
+        #logging.info(f'KEY = {key}')
+        if "KEY_UP" in key:
+            sock.send(b'UP')
+        elif "KEY_DOWN" in key:
+            sock.send(b'DOWN')
+        elif "KEY_RIGHT" in key:
+            sock.send(b'RIGHT')
+        elif "KEY_LEFT" in key:
+            sock.send(b'LEFT')
 
         # Send back
-        message = b'hi'
-        sock.send(message)
-        logger.info(f'Sending: {message!r}')
+        #message = b'hi'
+        #sock.send(message)
+        #logger.info(f'Sending: {message!r}')
         time.sleep(1)
 
     sock.close()
@@ -62,16 +75,17 @@ def process_data(data, w):
         world = data['positions']
         len_world = len(world)
       
-        minimum_y = 3
-        for x in range(3):
-            for y in range(3):
-                #w.addstr(y + minimum_y, x, str(world[x + (y * 10)]))
-                #w.addstr(y + minimum_y, x, str('X'))
-                w.addstr(y, x, str('X'))
-                w.refresh()
+        minimum_y = 20
+        for x in range(size_x):
+            for y in range(size_y):
+                w.addstr(y + minimum_y, x, emoji.emojize(str(world[x + (y * 10)])))
 
         # Get a key
-        #w.getch()
+        key = w.getkey()
+        w.addstr(size_y + minimum_y + 2, 1, key)
+        w.refresh()
+        return key
+
     except Exception as e:
         logging.error(f'Error in process_data: {e}')
 
@@ -154,7 +168,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--debug', help='Amount of debugging. This shows inner information about the flows.', action='store', required=False, type=int)
 
     args = parser.parse_args()
-    logging.basicConfig(level=logging.INFO, format='%(name)s: %(message)s',)
+    logging.basicConfig(level=logging.CRITICAL, format='%(name)s: %(message)s',)
     logging.info('Client started')
 
 
