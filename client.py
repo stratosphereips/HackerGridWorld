@@ -30,38 +30,41 @@ def start_client(server, port, w):
     Start the socket server
     Define the function to deal with data
     """
-    logger = logging.getLogger('CLIENT')
-    logger.info('Starting client')
+    try:
+        logger = logging.getLogger('CLIENT')
+        logger.info('Starting client')
 
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((server, port))
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((server, port))
 
-    while True:
-        # Get data
-        data = sock.recv(1024)
-        logger.info(f'Received: {data.decode()!r}')
+        while True:
+            # Get data
+            data = sock.recv(1024)
+            logger.info(f'Received: {data.decode()!r}')
 
-        #print(step)
-        key = process_data(data, w)
-        #print(key)
+            #print(step)
+            key = process_data(data, w)
+            #print(key)
 
-        #logging.info(f'KEY = {key}')
-        if "KEY_UP" in key:
-            sock.send(b'UP')
-        elif "KEY_DOWN" in key:
-            sock.send(b'DOWN')
-        elif "KEY_RIGHT" in key:
-            sock.send(b'RIGHT')
-        elif "KEY_LEFT" in key:
-            sock.send(b'LEFT')
+            #logging.info(f'KEY = {key}')
+            if "KEY_UP" in key:
+                sock.send(b'UP')
+            elif "KEY_DOWN" in key:
+                sock.send(b'DOWN')
+            elif "KEY_RIGHT" in key:
+                sock.send(b'RIGHT')
+            elif "KEY_LEFT" in key:
+                sock.send(b'LEFT')
 
-        # Send back
-        #message = b'hi'
-        #sock.send(message)
-        #logger.info(f'Sending: {message!r}')
-        time.sleep(1)
+            # Send back
+            #message = b'hi'
+            #sock.send(message)
+            #logger.info(f'Sending: {message!r}')
+            time.sleep(1)
 
-    sock.close()
+        sock.close()
+    except Exception as e:
+        logging.error(f'Error in start_client: {e}')
 
 def process_data(data, w):
     """
@@ -72,13 +75,16 @@ def process_data(data, w):
         data = json.loads(data)
         size_x = int(data['size'].split('x')[0])
         size_y = int(data['size'].split('x')[1])
-        world = data['positions']
-        len_world = len(world)
+        world_score = data['score']
+        world_positions = data['positions']
       
+        # Print positions
         minimum_y = 10
         for x in range(size_x):
             for y in range(size_y):
-                w.addstr(y + minimum_y, x, emoji.emojize(str(world[x + (y * 10)])))
+                w.addstr(y + minimum_y, x, emoji.emojize(str(world_positions[x + (y * 10)])))
+        # Print score
+        w.addstr(minimum_y + size_y + 1, 0, str(world_score))
 
         # Get a key
         key = w.getkey()
