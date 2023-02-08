@@ -33,15 +33,13 @@ async def handle_new_client(reader, writer):
     logger.info(f"Handling data from client {addr}")
 
     # Get a new world
-    myworld = World()
-    world = myworld.get_world()
-    
-
+    myworld = World(score=100)
+    world_env = myworld.get_world()
 
     while True:
-        answer = world
+        answer = world_env
         # Convert world to json before sending
-        world_json = json.dumps(world)
+        world_json = json.dumps(world_env)
         logger.info(f"Sending: {world_json!r}")
         writer.write(bytes(str(world_json).encode()))
         await writer.drain()
@@ -62,7 +60,7 @@ class World(object):
     """
     Class worl"
     """
-    def __init__(self):
+    def __init__(self, score=100):
         """
         Initialize the web server
         Returns a dictionary
@@ -74,12 +72,16 @@ class World(object):
         self.character['icon'] = ":woman:"
         self.character['x'] = 5 
         self.character['y'] = 5 
-
+        self.goal = {}
+        self.goal['icon'] = ":box:"
+        self.goal['x'] = 9 
+        self.goal['y'] = 0 
+        self.move_penalty = -1
 
         # Create the world as a list
         self.world = {}
         self.world["size"] = str(self.size_x) + 'x'+ str(self.size_y)
-        self.world["score"] = 100
+        self.world['score']= score
 
         self.positions = []
         # Fill with empty first
@@ -143,6 +145,10 @@ class World(object):
         #y_line = 5
         #x_line = 5
         #self.positions[x_line + (y_line * self.size_x)] = ":ghost:"
+
+        # Goal
+        self.positions[self.goal['x'] + (self.goal['y'] * self.size_x)] = self.goal['icon']
+
         # Character
         self.positions[self.character['x'] + (self.character['y'] * self.size_x)] = self.character['icon']
 
@@ -168,6 +174,7 @@ class World(object):
         elif "LEFT" in key:
             self.character['x'] -= 1
         self.positions[self.character['x'] + (self.character['y'] * self.size_x)] = self.character['icon']
+        self.world['score'] -= self.move_penalty
 
 
 
