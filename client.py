@@ -14,7 +14,6 @@ import emoji
 # Init the curses screen
 #stdscr = curses.initscr()
 # Dont show the pressed keys in screen
-#curses.noecho()
 # Dont wait for enter
 #curses.cbreak()
 # Let curses take care of special keys as RIGHTARROW
@@ -25,12 +24,14 @@ import emoji
 
 __version__ = 'v0.1'
 
+
 def start_client(server, port, w):
     """
     Start the socket server
     Define the function to deal with data
     """
     try:
+
         logger = logging.getLogger('CLIENT')
         logger.info('Starting client')
 
@@ -97,7 +98,6 @@ def process_data(data, w):
 
 
 def curses_main(w):
-
     """
     This function is called curses_main to emphasise that it is
     the logical if not actual main function, called by curses.wrapper.
@@ -105,18 +105,12 @@ def curses_main(w):
     Its purpose is to call several other functions to demonstrate
     some of the functionality of curses.
     """
-
     w.addstr("---------------------\n")
     w.addstr("| Hacker Grid World |\n")
     w.addstr("---------------------\n")
     w.refresh()
 
     start_client('127.0.0.1', 9000, w)
-
-    #w.addstr("\npress any key to exit...")
-    #w.refresh()
-    #w.getch()
-
 
 
 def moving_and_sleeping(w):
