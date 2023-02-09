@@ -6,7 +6,7 @@ import argparse
 from datetime import datetime
 import logging
 import json
-
+import time
 import asyncio
 
 __version__ = 'v0.1'
@@ -24,6 +24,13 @@ async def server(host, port):
     async with server:
         await server.serve_forever()
 
+
+async def send_world(writer, world_json):
+    """
+    send worl
+    """
+    writer.write(bytes(str(world_json).encode()))
+
 async def handle_new_client(reader, writer):
     """
     Function to deal with each new client
@@ -38,15 +45,13 @@ async def handle_new_client(reader, writer):
 
     while True:
         answer = world_env
+
         # Convert world to json before sending
         world_json = json.dumps(world_env)
-        logger.info(f"Sending: {world_json!r}")
-        writer.write(bytes(str(world_json).encode()))
-        await writer.drain()
 
-        # Every x seconds, send it again
-        #await asyncio.sleep(1)
-        #writer.write(bytes(str(world_json).encode()))
+        logger.info(f"Sending: {world_json!r}")
+        await send_world(writer, world_json)
+        await writer.drain()
 
         data = await reader.read(20)
         message = data.decode()
