@@ -40,14 +40,11 @@ def start_client(server, port, w):
 
         while True:
             # Get data
-            data = sock.recv(1024)
-            logger.info(f'Received: {data.decode()!r}')
+            net_data = sock.recv(2048)
+            logger.info(f'Received: {net_data.decode()!r}')
 
-            #print(step)
-            key = process_data(data, w)
-            #print(key)
+            key = process_data(net_data, w)
 
-            #logging.info(f'KEY = {key}')
             if "KEY_UP" in key:
                 sock.send(b'UP')
             elif "KEY_DOWN" in key:
@@ -56,12 +53,13 @@ def start_client(server, port, w):
                 sock.send(b'RIGHT')
             elif "KEY_LEFT" in key:
                 sock.send(b'LEFT')
+            elif "q" in key:
+                break
+            else:
+                key = ''
+                sock.send(b' ')
+            logger.info(f'Sending: {key!r}')
 
-            # Send back
-            #message = b'hi'
-            #sock.send(message)
-            #logger.info(f'Sending: {message!r}')
-            time.sleep(1)
 
         sock.close()
     except Exception as e:
@@ -85,11 +83,11 @@ def process_data(data, w):
             for y in range(size_y):
                 w.addstr(y + minimum_y, x, emoji.emojize(str(world_positions[x + (y * 10)])))
         # Print score
-        w.addstr(minimum_y + size_y + 1, 0, str(world_score))
+        w.addstr(minimum_y + size_y + 1, 0, f'Score: {str(world_score):>5}') 
 
         # Get a key
         key = w.getkey()
-        w.addstr(size_y + minimum_y + 2, 1, key)
+        w.addstr(size_y + minimum_y + 2, 0, f'{key:<15}')
         w.refresh()
         return key
 
@@ -168,7 +166,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--debug', help='Amount of debugging. This shows inner information about the flows.', action='store', required=False, type=int)
 
     args = parser.parse_args()
-    logging.basicConfig(level=logging.CRITICAL, format='%(name)s: %(message)s',)
+    logging.basicConfig(filename='client.log', filemode='a', format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S',level=logging.INFO)
     logging.info('Client started')
 
 
