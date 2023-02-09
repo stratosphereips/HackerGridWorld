@@ -173,11 +173,47 @@ class Game_HGW(object):
         """
         return self.world
 
+    def check_boundaries(self):
+        """
+        Check boundaries of world and character 
+        """
+        # Check boundaries
+        if self.character['x'] >= self.world['max_x']:
+            self.character['x'] = self.world['max_x']
+        elif self.character['x'] <= self.world['min_x']:
+            self.character['x'] = self.world['min_x']
+
+        if self.character['y'] >= self.world['max_y']:
+            self.character['y'] = self.world['max_y']
+        elif self.character['y'] <= self.world['min_y']:
+            self.character['y'] = self.world['min_y']
+
+    def check_goal(self):
+        """
+        Check goal of world and character 
+        """
+        # Check goal
+        if self.character['x'] == self.goal['x'] and self.character['y'] == self.goal['y'] and not self.goal['taken']:
+            self.world['score'] += self.goal['score']
+            self.goal['taken'] = True
+
+    def check_end(self):
+        """
+        Check the end
+        """
+        if self.world['score'] <= 0:
+            self.world['end'] = True
+        elif self.goal['taken'] == True:
+            self.world['end'] = True
+
     def input_key(self, key):
         """
         process keys
         """
-        self.positions[self.character['x'] + (self.character['y'] * self.size_x)] = ":ram:"
+        self.check_end()
+
+        # Move character
+        self.world['positions'][self.character['x'] + (self.character['y'] * self.world['size_x'])] = self.background
         if "UP" in key:
             self.character['y'] -= 1
         elif "DOWN" in key:
@@ -186,8 +222,19 @@ class Game_HGW(object):
             self.character['x'] += 1
         elif "LEFT" in key:
             self.character['x'] -= 1
-        self.positions[self.character['x'] + (self.character['y'] * self.size_x)] = self.character['icon']
+
+        self.check_boundaries()
+
+        self.check_goal()
+
+        # Move character
+        logging.info(self.character)
+        self.world['positions'][self.character['x'] + (self.character['y'] * self.world['size_x'])] = self.character['icon']
         self.world['score'] -= self.move_penalty
+
+        # Cooldown period
+        # Each key inputted is forced to wait a little
+        time.sleep(0.1)
 
 
 
