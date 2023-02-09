@@ -33,7 +33,7 @@ async def handle_new_client(reader, writer):
     logger.info(f"Handling data from client {addr}")
 
     # Get a new world
-    myworld = World(score=100)
+    myworld = Game_HGW(score=100)
     world_env = myworld.get_world()
 
     while True:
@@ -56,37 +56,53 @@ async def handle_new_client(reader, writer):
         logger.info(f"Received {message!r} from {addr}")
 
 
-class World(object):
+class Game_HGW(object):
     """
-    Class worl"
+    Class Game_HGW
+    Organizes and implements the logic of the game
     """
     def __init__(self, score=100):
         """
         Initialize the web server
         Returns a dictionary
+
+        The game has a world, with characters and positions
+        it also has rules, scores actions and dynamics of movements
         """
-        self.world_conf = confjson.get('world', None)
-        self.size_x = self.world_conf.get('size_x', None)
-        self.size_y = self.world_conf.get('size_y', None)
+        self.conf = confjson.get('world', None)
+        # Create the world as a dict
+        self.world = {}
+        self.world["size_x"] = self.conf.get("size_x", None)
+        self.world["size_y"] = self.conf.get("size_y", None)
+        self.world["min_x"] = 0
+        self.world["min_y"] = 0
+        # size_x and size_y are the length, but it starts in 0
+        self.world["max_x"] = self.world["size_x"] - 1
+        self.world["max_y"] = self.world["size_y"] - 1
+        self.world["size"] = str(self.world["size_x"]) + 'x'+ str(self.world["size_y"])
+        self.world["score"]= score
+        self.world["positions"] = []
+
+        # Set character
         self.character = {}
-        self.character['icon'] = ":woman:"
+        self.character['icon'] = "W"
         self.character['x'] = 5 
         self.character['y'] = 5 
+
+        # Goal of world
         self.goal = {}
-        self.goal['icon'] = ":box:"
+        self.goal['icon'] = "X"
         self.goal['x'] = 9 
         self.goal['y'] = 0 
-        self.move_penalty = -1
+        self.goal['score'] = 100 
+        self.goal['taken'] = False 
+        self.move_penalty = 1
 
-        # Create the world as a list
-        self.world = {}
-        self.world["size"] = str(self.size_x) + 'x'+ str(self.size_y)
-        self.world['score']= score
+        # Set end
+        self.world['end'] = False
 
-        self.positions = []
-        # Fill with empty first
-        #for pos in range(size_x*size_y):
-            #positions.append("")
+        # Iconography
+        self.background = ' '
 
         """
         line0 = "XXXXXXXXXX"
@@ -129,17 +145,16 @@ class World(object):
         """
 
         # Fill the middle rest with emojis
-        #positions[21:28] = [":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:"]
-        self.positions[0:9] = [":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:"]
-        self.positions[10:19] = [":ram:",":locked:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:"]
-        self.positions[20:29] = [":ram:",":man:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:"]
-        self.positions[30:39] = [":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:"]
-        self.positions[40:49] = [":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:"]
-        self.positions[50:59] = [":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:"]
-        self.positions[60:69] = [":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:"]
-        self.positions[70:79] = [":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:"]
-        self.positions[80:89] = [":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:"]
-        self.positions[90:99] = [":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:",":ram:"]
+        self.world['positions'][0:9] = [self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background]
+        self.world['positions'][10:19] = [self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background]
+        self.world['positions'][20:29] = [self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background]
+        self.world['positions'][30:39] = [self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background]
+        self.world['positions'][40:49] = [self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background]
+        self.world['positions'][50:59] = [self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background]
+        self.world['positions'][60:69] = [self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background]
+        self.world['positions'][70:79] = [self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background]
+        self.world['positions'][80:89] = [self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background]
+        self.world['positions'][90:99] = [self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background]
 
         # Invidivual emojis
         #y_line = 5
@@ -147,12 +162,10 @@ class World(object):
         #self.positions[x_line + (y_line * self.size_x)] = ":ghost:"
 
         # Goal
-        self.positions[self.goal['x'] + (self.goal['y'] * self.size_x)] = self.goal['icon']
+        self.world['positions'][self.goal['x'] + (self.goal['y'] * self.world['size_x'])] = self.goal['icon']
 
         # Character
-        self.positions[self.character['x'] + (self.character['y'] * self.size_x)] = self.character['icon']
-
-        self.world["positions"] = self.positions
+        self.world['positions'][self.character['x'] + (self.character['y'] * self.world['size_x'])] = self.character['icon']
 
     def get_world(self):
         """
