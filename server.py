@@ -109,29 +109,6 @@ class Game_HGW(object):
         # Iconography
         self.background = ' '
 
-        """
-        line0 = "XXXXXXXXXX"
-        line1 = "X        X"
-        line2 = "X        X"
-        line3 = "X        X"
-        line4 = "X        X"
-        line5 = "X        X"
-        line6 = "X        X"
-        line7 = "X        X"
-        line8 = "X        X"
-        line9 = "XXXXXXXXXX"
-        positions.extend(list(line0))
-        positions.extend(list(line1))
-        positions.extend(list(line2))
-        positions.extend(list(line3))
-        positions.extend(list(line4))
-        positions.extend(list(line5))
-        positions.extend(list(line6))
-        positions.extend(list(line7))
-        positions.extend(list(line8))
-        positions.extend(list(line9))
-        """
-
         # To do emoji by emoji
         # fill top and bottom
         """
