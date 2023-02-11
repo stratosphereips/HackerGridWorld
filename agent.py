@@ -29,7 +29,7 @@ class q_learning(object):
         self.epsilon = 0.001
         self.initialize_q_table(world)
 
-    def initialize_q_table(world):
+    def initialize_q_table(self, world):
         """
         Init the q table values
         """
@@ -41,7 +41,15 @@ class q_learning(object):
         Return an action
         """
         # First select an action from the 
-        return list(actions.values())[0]
+        return list(self.actions.values())[0]
+
+    def game_ended(self):
+        """
+        End of episode
+        """
+        logger = logging.getLogger('AGENT')
+        logger.info('Episode of Agent ended.')
+
 
 
 class Game(object):
@@ -49,11 +57,11 @@ class Game(object):
     Game object
     """
     def __init__(self):
-        myworld.size_x = 0
-        myworld.size_y = 0
-        myworld.world_score = 0
-        myworld.world_positions = {}
-        myworld.end = False
+        self.size_x = 0
+        self.size_y = 0
+        self.world_score = 0
+        self.world_positions = {}
+        self.end = False
 
 def start_agent(w, sock):
     """
@@ -93,7 +101,7 @@ def start_agent(w, sock):
             key = agent_model.act(myworld)
 
             # Print the action
-            print_action(action, myworld, w)
+            print_action(key, myworld, w)
 
             if "KEY_UP" in key:
                 sock.send(b'UP')
