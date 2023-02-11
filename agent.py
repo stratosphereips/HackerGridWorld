@@ -10,6 +10,7 @@ import curses
 import socket
 import time
 import emoji
+import numpy as np
 
 
 __version__ = 'v0.1'
@@ -21,19 +22,31 @@ class q_learning(object):
     act(world): To receive a Game() object
 
     """
-    def __init__(self, world):
-        pass
-        self.q_table = {}
+    def __init__(self, theworld):
+        self.q_table = []
         self.actions = {'0':'KEY_UP', '1':'KEY_DOWN', '2':'KEY_LEFT', '3':'KEY_RIGHT'}
         self.step_seze = 0.01
         self.epsilon = 0.001
-        self.initialize_q_table(world)
+        self.world = {}
+        self.world['size_x'] = theworld.size_x
+        self.world['size_y'] = theworld.size_y
+        self.score = theworld.world_score
+        self.end = theworld.end
+        self.initialize_q_table(self.world)
 
     def initialize_q_table(self, world):
         """
         Init the q table values
         """
-        pass
+        """
+        for x in self.world['size_x']:
+            for y in self.world['size_y']:
+                state = []
+                for action in self.actions.keys():
+                    state.append = 0
+                self.q_table.append(state)
+        """
+        np.zeros((self.world['size_x'], self.world['size_y'], len(self.actions)))
 
     def act(self, world):
         """
