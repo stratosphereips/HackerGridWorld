@@ -14,8 +14,14 @@ import emoji
 
 __version__ = 'v0.1'
 
+class Game(object):
+    """
+    Game object
+    """
+    def __init__(self):
+        pass
 
-def start_client(server, port, w):
+def start_client(w, sock):
     """
     Start the socket server
     Define the function to deal with data
@@ -25,15 +31,27 @@ def start_client(server, port, w):
         logger = logging.getLogger('CLIENT')
         logger.info('Starting client')
 
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((server, port))
+        myworld = Game()
 
         while True:
             # Get data
             net_data = sock.recv(2048)
             logger.info(f'Received: {net_data.decode()!r}')
 
-            key = process_data(net_data, w)
+            # Process data, print world
+            process_data(myworld, net_data, w)
+
+            # Check end
+            if check_end(myworld):
+                # The game ended
+                # Get the new map to reset
+                net_data = sock.recv(2048)
+                logger.info(f'Received: {net_data.decode()!r}')
+                # Process data, print world
+                process_data(myworld, net_data, w)
+
+            # Get key from user and process it
+            key = get_key(myworld, w)
 
             if "KEY_UP" in key:
                 sock.send(b'UP')
@@ -51,54 +69,82 @@ def start_client(server, port, w):
             logger.info(f'Sending: {key!r}')
 
 
-        sock.close()
     except Exception as e:
         logging.error(f'Error in start_client: {e}')
 
-def process_data(data, w):
+
+def check_end(myworld):
+    """
+    Check if we reached the end
+    """
+    if myworld.end:
+        # Game end
+        logging.info(f'Game ended: Score: {myworld.world_score}')
+        return True
+
+def process_data(myworld, data, w):
     """
     Process the data sent by the server
     """
     try:
         # convert to dict
         data = json.loads(data)
-        size_x = int(data['size'].split('x')[0])
-        size_y = int(data['size'].split('x')[1])
-        world_score = data['score']
-        world_positions = data['positions']
+        myworld.size_x = int(data['size'].split('x')[0])
+        myworld.size_y = int(data['size'].split('x')[1])
+        myworld.world_score = data['score']
+        myworld.world_positions = data['positions']
+        myworld.end = data['end']
       
         # Print positions
         minimum_y = 10
-        for x in range(size_x):
-            for y in range(size_y):
-                w.addstr(y + minimum_y, x, emoji.emojize(str(world_positions[x + (y * 10)])))
+        for x in range(myworld.size_x):
+            for y in range(myworld.size_y):
+                w.addstr(y + minimum_y, x, emoji.emojize(str(myworld.world_positions[x + (y * 10)])))
         # Print score
-        w.addstr(minimum_y + size_y + 1, 0, f'Score: {str(world_score):>5}') 
-
-        # Get a key
-        key = w.getkey()
-        w.addstr(size_y + minimum_y + 2, 0, f'{key:<15}')
-        w.refresh()
-        return key
-
+        w.addstr(minimum_y + myworld.size_y + 1, 0, f"Score: {str(myworld.world_score):>5}") 
     except Exception as e:
         logging.error(f'Error in process_data: {e}')
 
+def get_key(myworld, w):
+    """
+    Get a key from the user
+    """
+    minimum_y = 10
+    # Get a key
+    key = w.getkey()
+    w.addstr(myworld.size_y + minimum_y + 2, 0, f'{key:<15}')
+    w.refresh()
+    return key
 
-def curses_main(w):
+
+def main(w):
     """
     This function is called curses_main to emphasise that it is
     the logical if not actual main function, called by curses.wrapper.
 
     Its purpose is to call several other functions to demonstrate
     some of the functionality of curses.
+    
+    w is the curses window
     """
+
+    # Print the banner
     w.addstr("---------------------\n")
     w.addstr("| Hacker Grid World |\n")
     w.addstr("---------------------\n")
     w.refresh()
 
-    start_client('127.0.0.1', 9000, w)
+    # Get the socket of communication
+    server = args.server
+    port = args.port
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((server, port))
+    
+    # Start the client
+    start_client(w, sock)
+
+    sock.close()
 
 
 def moving_and_sleeping(w):
@@ -154,6 +200,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=f"Client for humans of th Hacker Grid World Server. Version {__version__}. Author: Sebastian Garcia, eldraco@gmail.com", usage='%(prog)s -n <screen_name> [options]')
     parser.add_argument('-v', '--verbose', help='Amount of verbosity. This shows more info about the results.', action='store', required=False, type=int)
     parser.add_argument('-d', '--debug', help='Amount of debugging. This shows inner information about the flows.', action='store', required=False, type=int)
+    parser.add_argument('-s', '--server', help='IP of game server.', action='store', required=False, type=str, default='127.0.0.1')
+    parser.add_argument('-p', '--port', help='Port of game server.', action='store', required=False, type=int, default=9000)
 
     args = parser.parse_args()
     logging.basicConfig(filename='client.log', filemode='a', format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S',level=logging.INFO)
@@ -161,7 +209,7 @@ if __name__ == '__main__':
 
 
     try:
-        curses.wrapper(curses_main)
+        curses.wrapper(main)
     except Exception as e:
         logging.error(f'Error: {e}')
     finally:
