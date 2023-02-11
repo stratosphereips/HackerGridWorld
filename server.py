@@ -43,8 +43,22 @@ async def handle_new_client(reader, writer):
     myworld = Game_HGW(score=100)
     world_env = myworld.get_world()
 
+    # Send the first world
+    # Convert world to json before sending
+    world_json = json.dumps(world_env)
+    logger.info(f"Sending: {world_json!r}")
+    await send_world(writer, world_json)
+    await writer.drain()
+
     while True:
-        answer = world_env
+
+        data = await reader.read(20)
+        message = data.decode()
+
+        logger.info(f"Received {message!r} from {addr}")
+
+        myworld.process_input_key(message)
+        #logger.info(f"World was updated: {myworld.character}")
 
         # Convert world to json before sending
         world_json = json.dumps(world_env)
@@ -53,12 +67,18 @@ async def handle_new_client(reader, writer):
         await send_world(writer, world_json)
         await writer.drain()
 
-        data = await reader.read(20)
-        message = data.decode()
+        # If the game ended, reset and resend
+        if myworld.world['end']:
+            myworld = Game_HGW(score=100)
+            world_env = myworld.get_world()
 
-        myworld.input_key(message)
+            # Send the first world
+            # Convert world to json before sending
+            world_json = json.dumps(world_env)
+            logger.info(f"Sending: {world_json!r}")
+            await send_world(writer, world_json)
+            await writer.drain()
 
-        logger.info(f"Received {message!r} from {addr}")
 
 
 class Game_HGW(object):
@@ -99,11 +119,21 @@ class Game_HGW(object):
         self.goal['icon'] = "X"
         self.goal['x'] = 9 
         self.goal['y'] = 0 
-        self.goal['score'] = 100 
+        self.goal['score'] = 100
         self.goal['taken'] = False 
+
+        # Output gate of world
+        self.output_gate = {}
+        self.output_gate['icon'] = "O"
+        self.output_gate['x'] = 9 
+        self.output_gate['y'] = 9 
+        self.output_gate['score'] = 0 
+        self.output_gate['taken'] = False 
+
+        # Move penalty
         self.move_penalty = 1
 
-        # Set end
+        # Track the end
         self.world['end'] = False
 
         # Iconography
@@ -149,6 +179,15 @@ class Game_HGW(object):
         # Character
         self.world['positions'][self.character['x'] + (self.character['y'] * self.world['size_x'])] = self.character['icon']
 
+        self.put_fixed_items()
+
+    def put_fixed_items(self):
+        """
+        Add the fixed items
+        """
+        # output gate
+        self.world['positions'][self.output_gate['x'] + (self.output_gate['y'] * self.world['size_x'])] = self.output_gate['icon']
+
     def get_world(self):
         """
         Get the world
@@ -170,7 +209,7 @@ class Game_HGW(object):
         elif self.character['y'] <= self.world['min_y']:
             self.character['y'] = self.world['min_y']
 
-    def check_goal(self):
+    def check_collisions(self):
         """
         Check goal of world and character 
         """
@@ -179,22 +218,26 @@ class Game_HGW(object):
             self.world['score'] += self.goal['score']
             self.goal['taken'] = True
 
+        # Check output_gate
+        if self.character['x'] == self.output_gate['x'] and self.character['y'] == self.output_gate['y'] and not self.output_gate['taken']:
+            self.output_gate['taken'] = True
+
     def check_end(self):
         """
         Check the end
         """
         if self.world['score'] <= 0:
             self.world['end'] = True
-        elif self.goal['taken'] == True:
+        if self.output_gate['taken'] == True:
             self.world['end'] = True
 
-    def input_key(self, key):
+    def process_input_key(self, key):
         """
-        process keys
+        process input key
         """
-        self.check_end()
 
-        # Move character
+        # Find the new positions of the character
+        # Delete the current character
         self.world['positions'][self.character['x'] + (self.character['y'] * self.world['size_x'])] = self.background
         if "UP" in key:
             self.character['y'] -= 1
@@ -204,21 +247,31 @@ class Game_HGW(object):
             self.character['x'] += 1
         elif "LEFT" in key:
             self.character['x'] -= 1
+        logging.info(f"The char was moved to {self.character['x']} {self.character['y']} ")
 
+        # Compute the character move penalty
+        self.world['score'] -= self.move_penalty
+
+        # Check that the boundaries of the game were not violated
         self.check_boundaries()
 
-        self.check_goal()
+        # Check if there were any collitions
+        self.check_collisions()
 
-        # Move character
-        logging.info(self.character)
+        # Check if the game ended
+        self.check_end()
+
+        # Move the character
         self.world['positions'][self.character['x'] + (self.character['y'] * self.world['size_x'])] = self.character['icon']
-        self.world['score'] -= self.move_penalty
+
+        # Put fixed objects back
+        self.put_fixed_items()
+
+        logging.info(self.character)
 
         # Cooldown period
         # Each key inputted is forced to wait a little
         time.sleep(0.1)
-
-
 
 
 # Main
