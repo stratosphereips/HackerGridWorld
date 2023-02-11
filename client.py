@@ -11,16 +11,6 @@ import socket
 import time
 import emoji
 
-# Init the curses screen
-#stdscr = curses.initscr()
-# Dont show the pressed keys in screen
-# Dont wait for enter
-#curses.cbreak()
-# Let curses take care of special keys as RIGHTARROW
-#stdscr.keypad(True)
-#stdscr.addstr(20, 20, "11111")
-#stdscr.refresh()
-
 
 __version__ = 'v0.1'
 
