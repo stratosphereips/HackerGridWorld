@@ -25,15 +25,25 @@ class q_learning(object):
     """
     def __init__(self, theworld):
         self.q_table = []
-        self.actions = {'0':'KEY_UP', '1':'KEY_DOWN', '2':'KEY_LEFT', '3':'KEY_RIGHT'}
-        self.step_seze = 0.01
-        self.epsilon = 0.001
+        #self.actions = {'0':'KEY_UP', '1':'KEY_DOWN', '2':'KEY_LEFT', '3':'KEY_RIGHT'}
+        self.actions = ['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT']
+        self.last_action = -1
+        self.step_size = 0.1
+        self.epsilon = 0.5
+        self.gamma = 0.9
         self.world = {}
         self.world['size_x'] = theworld.size_x
         self.world['size_y'] = theworld.size_y
+        self.current_state = theworld.current_state
+        self.prev_state = self.current_state
         self.score = theworld.world_score
         self.end = theworld.end
+        self.reward = theworld.reward
         self.initialize_q_table(self.world)
+        self.logger = logging.getLogger('AGENT')
+        self.episodes = 0
+        self.last_episode_scores = []
+
 
     def initialize_q_table(self, world):
         """
