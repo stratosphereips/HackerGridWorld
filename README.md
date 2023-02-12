@@ -30,9 +30,19 @@ A client-server game to train and play with remote reinforcement learning in a H
 
 The client and agent automatically visualize the world and the actions using curses in the terminal. This makes then slower but it is really nice to see which actions they are taking and how all the actions look like in the real game. You can see how the actions of the agent start to make sense more and more.
 
+
 # Logs
 
 The server, client and agent create logs called `server.log`, `client.log`, and `agent.log`. The verbosity can be controlled. Be careful because using logging.INFO for the agent can lead to a log of hundreds of megabytes in a couple of minutes. By default they use logging.ERROR.
+
+# Monitoring
+The best way to monitor now the progress is 
+
+    tail -f agent.log
+
+# Final strategy
+The strategy of the current agent is the generated q-table. Every 100 episodes the q-table is saved in the file `model.out`. Incrementally, so you can see all the past q-tables generated every 100 episodes.
+
 
 # What happened to the emojis in the console?
 
