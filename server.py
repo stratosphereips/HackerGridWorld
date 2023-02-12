@@ -105,7 +105,9 @@ class Game_HGW(object):
         self.world["max_x"] = self.world["size_x"] - 1
         self.world["max_y"] = self.world["size_y"] - 1
         self.world["size"] = str(self.world["size_x"]) + 'x'+ str(self.world["size_y"])
-        self.world["score"]= score
+        self.world["score"] = score
+        self.prev_score = self.world["score"]
+        self.world["reward"] = 0
         self.world["positions"] = []
 
         # Set character
@@ -267,6 +269,10 @@ class Game_HGW(object):
 
         # Put fixed objects back
         self.put_fixed_items()
+
+        # Set reward
+        self.world['reward'] = self.world['score'] - self.prev_score 
+        self.prev_score = self.world['score']
 
         logging.info(self.character)
 
