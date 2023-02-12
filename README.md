@@ -6,7 +6,7 @@ A client-server game to train and play with remote reinforcement learning in a H
 
 </p>
 
-# Use
+# How to Use
 
     git clone https://github.com/stratosphereips/HackerGridWorld.git
     cd HackerGridWorld
@@ -14,11 +14,21 @@ A client-server game to train and play with remote reinforcement learning in a H
     conda activate HGW
     # Start server and client in different consoles, or use tmux
     tmux new-session -d -s HGW-server 'python server.py -c HGW.server.conf'
+    
+    # To play as human and see the world
     python ./client.py
 
+    # To train the q-learning agent
+    python ./agent.py
 
+# Visualization
 
-# The list of emojis can be consulted here
-~/miniconda3/envs/HGW/lib/python3.9/site-packages/pip/_vendor/rich/_emoji_codes.py
+The client and agent automatically visualize the world and the actions using curses in the terminal. This makes then slower but it is really nice to see which actions they are taking and how all the actions look like in the real game. You can see how the actions of the agent start to make sense more and more.
 
-https://unicode.org/emoji/charts/emoji-list.html
+# Logs
+
+The server, client and agent create logs called `server.log`, `client.log`, and `agent.log`. The verbosity can be controlled. Be careful because using logging.INFO for the agent can lead to a log of hundreds of megabytes in a couple of minutes. By default they use logging.ERROR.
+
+# What happened to the emojis in the console?
+
+The curses library really doesn't like the varying width of emojis, so it keep breaking the terminal and making impossible to see correctly. So I went back to ASCII :-(
