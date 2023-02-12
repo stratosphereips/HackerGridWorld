@@ -306,9 +306,10 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--debug', help='Amount of debugging. This shows inner information about the flows.', action='store', required=False, type=int)
     parser.add_argument('-s', '--server', help='IP of game server.', action='store', required=False, type=str, default='127.0.0.1')
     parser.add_argument('-p', '--port', help='Port of game server.', action='store', required=False, type=int, default=9000)
+    parser.add_argument('-S', '--savemodel', help='File where to save the model.', action='store', required=False, type=str, default='model.out')
 
     args = parser.parse_args()
-    logging.basicConfig(filename='agent.log', filemode='a', format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S',level=logging.INFO)
+    logging.basicConfig(filename='agent.log', filemode='a', format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S',level=logging.ERROR)
 
 
     try:
