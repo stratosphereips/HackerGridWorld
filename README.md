@@ -2,8 +2,7 @@
 A client-server game to train and play with remote reinforcement learning in a Hacker Grid World.
 
 <p align="center">
-<img src="https://github.com/stratosphereips/HackerGridWorld/raw/main/client.gif" width="850px" title="HGW in action.">
-<img src="https://github.com/stratosphereips/HackerGridWorld/raw/main/agent.gif" width="850px" title="HGW in action.">
+<img src="https://github.com/stratosphereips/HackerGridWorld/raw/main/agent.gif" width="450px" title="HGW in action.">
 </p>
 
 
@@ -38,3 +37,8 @@ The server, client and agent create logs called `server.log`, `client.log`, and 
 # What happened to the emojis in the console?
 
 The curses library really doesn't like the varying width of emojis, so it keep breaking the terminal and making impossible to see correctly. So I went back to ASCII :-(
+
+# How playing the client looks like
+<p align="center">
+<img src="https://github.com/stratosphereips/HackerGridWorld/raw/main/client.gif" width="450px" title="HGW in action.">
+</p>
