@@ -26,6 +26,7 @@ dependencies:
       - itsdangerous==2.1.2
       - jinja2==3.1.2
       - markupsafe==2.1.2
+      - numpy==1.24.2
       - werkzeug==2.2.2
       - zipp==3.12.1
 prefix: /Users/sebas/miniconda3/envs/HGW
