@@ -221,6 +221,7 @@ class Game_HGW(object):
         # Check output_gate
         if self.character['x'] == self.output_gate['x'] and self.character['y'] == self.output_gate['y'] and not self.output_gate['taken']:
             self.output_gate['taken'] = True
+            logging.critical(f"End by gate")
 
     def check_end(self):
         """
