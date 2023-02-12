@@ -153,6 +153,7 @@ class Game(object):
         self.world_score = 0
         self.world_positions = {}
         self.end = False
+        self.current_state = -1
 
 def start_agent(w, sock):
     """
@@ -216,9 +217,11 @@ def start_agent(w, sock):
             # Process data, print world
             process_data(myworld, net_data, w)
 
+            # With this new data, now learn
+            agent_model.learn(myworld)
 
     except Exception as e:
-        logging.error(f'Error in start_client: {e}')
+        logging.error(f'Error in start_agent: {e}')
 
 
 def check_end(myworld):
@@ -241,7 +244,9 @@ def process_data(myworld, data, w):
         myworld.size_y = int(data['size'].split('x')[1])
         myworld.world_score = data['score']
         myworld.world_positions = data['positions']
+        myworld.current_state = data['current_character_position']
         myworld.end = data['end']
+        myworld.reward = data['reward']
       
         # Print positions
         minimum_y = 10
@@ -286,7 +291,7 @@ def main(w):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((server, port))
     
-    # Start the client
+    # Start the agent
     start_agent(w, sock)
 
     sock.close()
