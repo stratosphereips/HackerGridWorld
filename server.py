@@ -115,6 +115,8 @@ class Game_HGW(object):
         self.character['icon'] = "W"
         self.character['x'] = 5 
         self.character['y'] = 5 
+        # Set the state of the character in the world
+        self.world['current_character_position'] = self.character['x'] + (self.character['y'] * self.world['size_x'])
 
         # Goal of world
         self.goal = {}
@@ -266,6 +268,7 @@ class Game_HGW(object):
 
         # Move the character
         self.world['positions'][self.character['x'] + (self.character['y'] * self.world['size_x'])] = self.character['icon']
+        self.world['current_character_position'] = self.character['x'] + (self.character['y'] * self.world['size_x'])
 
         # Put fixed objects back
         self.put_fixed_items()
