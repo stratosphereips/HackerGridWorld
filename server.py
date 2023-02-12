@@ -40,7 +40,7 @@ async def handle_new_client(reader, writer):
     logger.info(f"Handling data from client {addr}")
 
     # Get a new world
-    myworld = Game_HGW(score=100)
+    myworld = Game_HGW(score=500)
     world_env = myworld.get_world()
 
     # Send the first world
@@ -69,7 +69,7 @@ async def handle_new_client(reader, writer):
 
         # If the game ended, reset and resend
         if myworld.world['end']:
-            myworld = Game_HGW(score=100)
+            myworld = Game_HGW(score=500)
             world_env = myworld.get_world()
 
             # Send the first world
