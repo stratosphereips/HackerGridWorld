@@ -287,7 +287,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--configfile', help='Configuration file.', action='store', required=True, type=str)
 
     args = parser.parse_args()
-    logging.basicConfig(level=logging.INFO, format='%(name)s: %(message)s',)
+    logging.basicConfig(level=logging.ERROR, format='%(name)s: %(message)s',)
 
     with open(args.configfile, 'r') as jfile:
         confjson = json.load(jfile)
