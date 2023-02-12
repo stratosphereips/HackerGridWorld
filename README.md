@@ -2,9 +2,11 @@
 A client-server game to train and play with remote reinforcement learning in a Hacker Grid World.
 
 <p align="center">
-<img src="images/Screenshot%202023-02-06%20at%2023.31.20.png" width="150" title="hover text">
-
+<img src="https://github.com/stratosphereips/HackerGridWorld/raw/main/client.gif" width="850px" title="HGW in action.">
+<img src="https://github.com/stratosphereips/HackerGridWorld/raw/main/agent.gif" width="850px" title="HGW in action.">
 </p>
+
+
 
 # How to Use
 
