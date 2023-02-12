@@ -57,7 +57,17 @@ class q_learning(object):
                     state.append = 0
                 self.q_table.append(state)
         """
-        np.zeros((self.world['size_x'], self.world['size_y'], len(self.actions)))
+        self.q_table = np.zeros((self.world['size_x'] * self.world['size_y'], len(self.actions)))
+
+    def update_world(self, theworld):
+        """
+        Update world
+        """
+        self.current_state = theworld.current_state
+        self.score = theworld.world_score
+        #self.logger.error(f'Pli score: {self.score}')
+        self.end = theworld.end
+        self.reward = theworld.reward
 
     def act(self, world):
         """
@@ -121,8 +131,15 @@ class q_learning(object):
         """
         End of episode
         """
-        logger = logging.getLogger('AGENT')
-        logger.info('Episode of Agent ended.')
+        # Score we got
+        self.last_episode_scores.append(self.score)
+        #self.logger.error(f'Episode score: {self.score}')
+        self.episodes += 1
+        if self.episodes % 100 == 0:
+            self.logger.critical(f'Episodes elapsed: {self.episodes}. Avg Scores in last 100 episodes: {np.average(self.last_episode_scores)}')
+            with open(args.savemodel, 'a+') as f:
+                f.write(str(self.q_table) + '\n')
+        self.logger.info('Episode of Agent ended.')
 
 
 
