@@ -29,7 +29,10 @@ class q_learning(object):
         self.actions = ['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT']
         self.last_action = -1
         self.step_size = 0.1
-        self.epsilon = 0.5
+        self.epsilon_ini = 1
+        self.epsilon_fin = 0
+        self.max_episodes_epsilon = 3000
+        self.epsilon = self.epsilon_ini
         self.gamma = 0.9
         self.world = {}
         self.world['size_x'] = theworld.size_x
@@ -96,6 +99,8 @@ class q_learning(object):
 
             actions_state = self.q_table[self.current_state]
             die = random.random()
+            decay_rate = np.max( [(self.max_episodes_epsilon - self.episodes) / self.max_episodes_epsilon, 0])
+            self.epsilon = (self.epsilon_ini - self.epsilon_fin ) * decay_rate + self.epsilon_fin
             if die <= self.epsilon:
                 # Random action e-greedy
                 #self.logger.info('Choosing random greedy.')
@@ -136,7 +141,7 @@ class q_learning(object):
         #self.logger.error(f'Episode score: {self.score}')
         self.episodes += 1
         if self.episodes % 100 == 0:
-            self.logger.critical(f'Episodes elapsed: {self.episodes}. Avg Scores in last 100 episodes: {np.average(self.last_episode_scores)}')
+            self.logger.critical(f'Episodes elapsed: {self.episodes}. Avg Scores in last 100 episodes: {np.average(self.last_episode_scores)}. Epsilon: {self.epsilon}')
             with open(args.savemodel, 'a+') as f:
                 f.write(str(self.q_table) + '\n')
         self.logger.info('Episode of Agent ended.')
@@ -309,7 +314,7 @@ if __name__ == '__main__':
     parser.add_argument('-S', '--savemodel', help='File where to save the model.', action='store', required=False, type=str, default='model.out')
 
     args = parser.parse_args()
-    logging.basicConfig(filename='agent.log', filemode='a', format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S',level=logging.ERROR)
+    logging.basicConfig(filename='agent.log', filemode='a', format='%(asctime)s %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S',level=logging.ERROR)
 
 
     try:
