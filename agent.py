@@ -11,6 +11,7 @@ import socket
 import time
 import emoji
 import numpy as np
+import random
 
 
 __version__ = 'v0.1'
@@ -52,9 +53,59 @@ class q_learning(object):
         """
         Receive a world
         Return an action
+
+        When the episode finishes, we automatically receive the new world, so 
+        new states are ready.
         """
-        # First select an action from the 
-        return list(self.actions.values())[0]
+        # Update world
+        self.update_world(world)
+
+        # First select an action from the exploratory policy
+        action = self.choose_action()
+        return action
+
+    def choose_action(self):
+        """
+        Choose an action following a policy
+        """
+        try:
+            #self.logger.info('Choose action.')
+
+            # Store prev state
+            self.prev_state = self.current_state
+
+            actions_state = self.q_table[self.current_state]
+            die = random.random()
+            if die <= self.epsilon:
+                # Random action e-greedy
+                #self.logger.info('Choosing random greedy.')
+                action = random.randint(0, len(self.actions) - 1)
+            else:
+                #self.logger.info('Choosing max.')
+                # Choose the action that maximizes the value of this state
+                values_actions = self.q_table[self.current_state]
+                action = np.argmax(values_actions)
+            
+            # Store last action
+            self.logger.info(f'Updating last action {self.last_action} with {action}')
+            self.last_action = action
+            
+            action_name = self.actions[action]
+            return action_name
+        except Exception as e:
+            self.logger.error(f'Error in choose_action: {e}')
+
+    def learn(self, world):
+        """
+        Update the target policy to learn from the
+        last step
+        """
+        try:
+            state_max_value = np.argmax(self.q_table[self.current_state])
+            self.q_table[self.prev_state][self.last_action] = self.q_table[self.prev_state][self.last_action] + self.step_size * (self.reward + (self.gamma * state_max_value) - self.q_table[self.prev_state][self.last_action] ) 
+            self.logger.info(f'Prev state: {self.prev_state}, Action Values: {self.q_table[self.prev_state]}')
+        except Exception as e:
+            self.logger.error(f'Error in learn: {e}')
 
     def game_ended(self):
         """
