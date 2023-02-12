@@ -272,7 +272,8 @@ class Game_HGW(object):
 
         # Cooldown period
         # Each key inputted is forced to wait a little
-        time.sleep(0.1)
+        #time.sleep(0.1)
+        time.sleep(0)
 
 
 # Main
