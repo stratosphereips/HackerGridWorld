@@ -28,12 +28,13 @@ class q_learning(object):
         #self.actions = {'0':'KEY_UP', '1':'KEY_DOWN', '2':'KEY_LEFT', '3':'KEY_RIGHT'}
         self.actions = ['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT']
         self.last_action = -1
-        self.step_size = 0.1
-        self.epsilon_ini = 1
-        self.epsilon_fin = 0
-        self.max_episodes_epsilon = 3000
-        self.epsilon = self.epsilon_ini
-        self.gamma = 0.9
+        self.learning_rate = confjson.get('learning_rate', 0.1)
+        self.epsilon_start = confjson.get('epsilon_start', 1)
+        self.epsilon_end = confjson.get('epsilon_end', 0)
+        self.max_episodes_epsilon = confjson.get('epsilon_max_episodes', 3000)
+        self.epsilon = self.epsilon_start
+        self.gamma = confjson.get('gamma', 0.9)
+        self.n_episodes_evaluate = confjson.get('n_episodes_evaluate', 100)
         self.world = {}
         self.world['size_x'] = theworld.size_x
         self.world['size_y'] = theworld.size_y
@@ -312,10 +313,14 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--server', help='IP of game server.', action='store', required=False, type=str, default='127.0.0.1')
     parser.add_argument('-p', '--port', help='Port of game server.', action='store', required=False, type=int, default=9000)
     parser.add_argument('-S', '--savemodel', help='File where to save the model.', action='store', required=False, type=str, default='model.out')
+    parser.add_argument('-c', '--configfile', help='Configuration file.', action='store', required=True, type=str)
+    parser.add_argument('-r', '--replayfile', help='Used this saved model strategy to play in human time.', action='store', required=False, type=str)
 
     args = parser.parse_args()
     logging.basicConfig(filename='agent.log', filemode='a', format='%(asctime)s %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S',level=logging.ERROR)
 
+    with open(args.configfile, 'r') as jfile:
+        confjson = json.load(jfile)
 
     try:
         curses.wrapper(main)
