@@ -12,9 +12,10 @@ import time
 import emoji
 import numpy as np
 import random
+import pickle
 
 
-__version__ = 'v0.1'
+__version__ = 'v0.2'
 
 class q_learning(object):
     """
