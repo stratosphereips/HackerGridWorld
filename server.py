@@ -40,7 +40,7 @@ async def handle_new_client(reader, writer):
     logger.info(f"Handling data from client {addr}")
 
     # Get a new world
-    myworld = Game_HGW(score=500)
+    myworld = Game_HGW(score=confjson.get('STEPS', 500))
     world_env = myworld.get_world()
 
     # Send the first world
@@ -69,7 +69,7 @@ async def handle_new_client(reader, writer):
 
         # If the game ended, reset and resend
         if myworld.world['end']:
-            myworld = Game_HGW(score=500)
+            myworld = Game_HGW(score=confjson.get('STEPS', 500))
             world_env = myworld.get_world()
 
             # Send the first world
@@ -225,7 +225,6 @@ class Game_HGW(object):
         # Check output_gate
         if self.character['x'] == self.output_gate['x'] and self.character['y'] == self.output_gate['y'] and not self.output_gate['taken']:
             self.output_gate['taken'] = True
-            logging.critical(f"End by gate")
 
     def check_end(self):
         """
@@ -281,8 +280,7 @@ class Game_HGW(object):
 
         # Cooldown period
         # Each key inputted is forced to wait a little
-        #time.sleep(0.1)
-        time.sleep(0)
+        time.sleep(confjson.get('SPEED', 0))
 
 
 # Main
