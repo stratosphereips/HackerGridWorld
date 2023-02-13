@@ -101,13 +101,13 @@ class q_learning(object):
             actions_state = self.q_table[self.current_state]
             die = random.random()
             decay_rate = np.max( [(self.max_episodes_epsilon - self.episodes) / self.max_episodes_epsilon, 0])
-            self.epsilon = (self.epsilon_ini - self.epsilon_fin ) * decay_rate + self.epsilon_fin
+            self.epsilon = (self.epsilon_start - self.epsilon_end ) * decay_rate + self.epsilon_end
             if die <= self.epsilon:
                 # Random action e-greedy
-                #self.logger.info('Choosing random greedy.')
+                #self.logger.error('Choosing random greedy.')
                 action = random.randint(0, len(self.actions) - 1)
             else:
-                #self.logger.info('Choosing max.')
+                #self.logger.error('Choosing max.')
                 # Choose the action that maximizes the value of this state
                 values_actions = self.q_table[self.current_state]
                 action = np.argmax(values_actions)
@@ -137,16 +137,26 @@ class q_learning(object):
         """
         End of episode
         """
-        # Score we got
+        # Score we got in the last game
         self.last_episode_scores.append(self.score)
         #self.logger.error(f'Episode score: {self.score}')
         self.episodes += 1
-        if self.episodes % 100 == 0:
-            self.logger.critical(f'Episodes elapsed: {self.episodes}. Avg Scores in last 100 episodes: {np.average(self.last_episode_scores)}. Epsilon: {self.epsilon}')
+        if self.episodes % self.n_episodes_evaluate == 0:
+            avg_scores = np.average(self.last_episode_scores)
+            self.logger.critical(f'Episodes elapsed: {self.episodes}. Avg Scores in last 100 episodes: {avg_scores}. Epsilon: {self.epsilon}')
             with open(args.savemodel, 'a+') as f:
                 f.write(str(self.q_table) + '\n')
-        self.logger.info('Episode of Agent ended.')
+            # Store best model
+            if avg_scores > self.best_avg_score:
+                self.logger.critical(f'Saving model for best avg score of {self.n_episodes_evaluate} episodes: {avg_scores}')
+                # Save txt
+                with open('best-model.txt', 'w+') as fi:
+                    fi.write(str(self.q_table))
+                # Save npy
+                np.save('best-model', self.q_table)
+                self.best_avg_score = avg_scores
 
+        self.logger.info('Episode of Agent ended.')
 
 
 class Game(object):
