@@ -43,10 +43,21 @@ class q_learning(object):
         self.score = theworld.world_score
         self.end = theworld.end
         self.reward = theworld.reward
-        self.initialize_q_table(self.world)
         self.logger = logging.getLogger('AGENT')
         self.episodes = 0
         self.last_episode_scores = []
+        self.best_avg_score = 0.0
+        # If repaly mode, load the model
+        if args.replayfile:
+            # Load
+            self.q_table = np.load('best-model.npy')
+            # Force no random
+            self.epsilon_start = 0
+            self.epsilon_end = 0
+            self.epsilon = 0
+
+        else:
+            self.initialize_q_table(self.world)
 
 
     def initialize_q_table(self, world):
@@ -61,7 +72,8 @@ class q_learning(object):
                     state.append = 0
                 self.q_table.append(state)
         """
-        self.q_table = np.zeros((self.world['size_x'] * self.world['size_y'], len(self.actions)))
+        #self.q_table = np.zeros((self.world['size_x'] * self.world['size_y'], len(self.actions)))
+        self.q_table = np.random.rand(self.world['size_x'] * self.world['size_y'], len(self.actions))
 
     def update_world(self, theworld):
         """
@@ -126,12 +138,14 @@ class q_learning(object):
         Update the target policy to learn from the
         last step
         """
-        try:
-            state_max_value = np.argmax(self.q_table[self.current_state])
-            self.q_table[self.prev_state][self.last_action] = self.q_table[self.prev_state][self.last_action] + self.step_size * (self.reward + (self.gamma * state_max_value) - self.q_table[self.prev_state][self.last_action] ) 
-            self.logger.info(f'Prev state: {self.prev_state}, Action Values: {self.q_table[self.prev_state]}')
-        except Exception as e:
-            self.logger.error(f'Error in learn: {e}')
+        # If we are replaying, don't learn
+        if not args.replayfile:
+            try:
+                state_max_value = np.argmax(self.q_table[self.current_state])
+                self.q_table[self.prev_state][self.last_action] = self.q_table[self.prev_state][self.last_action] + self.learning_rate * (self.reward + (self.gamma * state_max_value) - self.q_table[self.prev_state][self.last_action] ) 
+                self.logger.info(f'Prev state: {self.prev_state}, Action Values: {self.q_table[self.prev_state]}')
+            except Exception as e:
+                self.logger.error(f'Error in learn: {e}')
 
     def game_ended(self):
         """
