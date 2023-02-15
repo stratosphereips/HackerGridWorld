@@ -47,7 +47,7 @@ class q_learning(object):
         self.logger = logging.getLogger('AGENT')
         self.episodes = 0
         self.last_episode_scores = []
-        self.best_avg_score = 0.0
+        self.best_score = 0.0
         # If repaly mode, load the model
         if args.replayfile:
             # Load
