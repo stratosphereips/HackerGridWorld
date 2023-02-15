@@ -131,7 +131,7 @@ class Game_HGW(object):
         self.output_gate['icon'] = "O"
         self.output_gate['x'] = 9 
         self.output_gate['y'] = 9 
-        self.output_gate['score'] = 0 
+        self.output_gate['score'] = 200 
         self.output_gate['taken'] = False 
 
         # Move penalty
@@ -224,6 +224,7 @@ class Game_HGW(object):
 
         # Check output_gate
         if self.character['x'] == self.output_gate['x'] and self.character['y'] == self.output_gate['y'] and not self.output_gate['taken']:
+            self.world['score'] += self.output_gate['score']
             self.output_gate['taken'] = True
 
     def check_end(self):
