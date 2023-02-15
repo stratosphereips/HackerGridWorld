@@ -80,9 +80,14 @@ class q_learning(object):
         """
         Update world
         """
+        #self.logger.info(f'In update. Current_state: {self.current_state}')
+        #self.logger.info(f'In update. The world current_state: {theworld.current_state}')
+        # Store prev state
+        self.prev_state = self.current_state
         self.current_state = theworld.current_state
+        #self.logger.info(f'In update. now prev: {self.prev_state}. Now current {self.current_state}')
+        self.prev_score = self.score
         self.score = theworld.world_score
-        #self.logger.error(f'Pli score: {self.score}')
         self.end = theworld.end
         #self.reward = theworld.reward
 
