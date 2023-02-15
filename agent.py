@@ -73,8 +73,8 @@ class q_learning(object):
                     state.append = 0
                 self.q_table.append(state)
         """
-        #self.q_table = np.zeros((self.world['size_x'] * self.world['size_y'], len(self.actions)))
-        self.q_table = np.random.rand(self.world['size_x'] * self.world['size_y'], len(self.actions))
+        self.q_table = np.zeros((self.world['size_x'] * self.world['size_y'], len(self.actions)))
+        #self.q_table = np.random.rand(self.world['size_x'] * self.world['size_y'], len(self.actions))
 
     def update_world(self, theworld):
         """
