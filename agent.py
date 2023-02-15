@@ -51,7 +51,7 @@ class q_learning(object):
         # If repaly mode, load the model
         if args.replayfile:
             # Load
-            self.q_table = np.load('best-model.npy')
+            self.q_table = np.load(args.replayfile)
             # Force no random
             self.epsilon_start = 0
             self.epsilon_end = 0
