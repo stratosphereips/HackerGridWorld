@@ -165,20 +165,20 @@ class q_learning(object):
         self.last_episode_scores.append(self.score)
         #self.logger.error(f'Episode score: {self.score}')
         self.episodes += 1
+
+        # Store best model
+        if self.score > self.best_score:
+            self.logger.critical(f'Saving model for best score of {self.n_episodes_evaluate} episodes: {self.score}')
+            # Save txt
+            with open(args.savemodel + '.txt', 'w+') as fi:
+                fi.write(str(self.q_table))
+            # Save npy
+            np.save(args.savemodel, self.q_table)
+            self.best_score = self.score
+
         if self.episodes % self.n_episodes_evaluate == 0:
             avg_scores = np.average(self.last_episode_scores)
             self.logger.critical(f'Episodes elapsed: {self.episodes}. Avg Scores in last 100 episodes: {avg_scores}. Epsilon: {self.epsilon}')
-            with open(args.savemodel, 'a+') as f:
-                f.write(str(self.q_table) + '\n')
-            # Store best model
-            if avg_scores > self.best_avg_score:
-                self.logger.critical(f'Saving model for best avg score of {self.n_episodes_evaluate} episodes: {avg_scores}')
-                # Save txt
-                with open('best-model.txt', 'w+') as fi:
-                    fi.write(str(self.q_table))
-                # Save npy
-                np.save('best-model', self.q_table)
-                self.best_avg_score = avg_scores
 
         self.logger.info('Episode of Agent ended.')
 
