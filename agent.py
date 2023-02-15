@@ -105,10 +105,7 @@ class q_learning(object):
         try:
             #self.logger.info('Choose action.')
 
-            # Store prev state
-            self.prev_state = self.current_state
-
-            actions_state = self.q_table[self.current_state]
+            #actions_state = self.q_table[self.current_state]
             die = random.random()
             decay_rate = np.max( [(self.max_episodes_epsilon - self.episodes) / self.max_episodes_epsilon, 0])
             self.epsilon = (self.epsilon_start - self.epsilon_end ) * decay_rate + self.epsilon_end
