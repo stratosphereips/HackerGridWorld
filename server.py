@@ -107,7 +107,7 @@ class Game_HGW(object):
         self.world["size"] = str(self.world["size_x"]) + 'x'+ str(self.world["size_y"])
         self.world["score"] = score
         self.prev_score = self.world["score"]
-        self.world["reward"] = 0
+        #self.world["reward"] = 0
         self.world["positions"] = []
 
         # Set character
@@ -272,11 +272,16 @@ class Game_HGW(object):
         # Put fixed objects back
         self.put_fixed_items()
 
-        # Set reward
-        self.world['reward'] = self.world['score'] - self.prev_score 
+        ## Set reward
+        #if self.world['end']:
+            ## If it is the ending position, the reward is the whole remaining score
+            #self.world['reward'] = self.world['score']
+        #else:
+            #self.world['reward'] = self.world['score'] - self.prev_score 
         self.prev_score = self.world['score']
 
-        logging.info(self.character)
+        logging.info(f"Score after key: {self.world['score']}")
+        #logging.info(f"Reward after key: {self.world['reward']}")
 
         # Cooldown period
         # Each key inputted is forced to wait a little
