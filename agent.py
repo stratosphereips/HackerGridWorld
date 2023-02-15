@@ -43,7 +43,7 @@ class q_learning(object):
         self.prev_state = self.current_state
         self.score = theworld.world_score
         self.end = theworld.end
-        self.reward = theworld.reward
+        #self.reward = theworld.reward
         self.logger = logging.getLogger('AGENT')
         self.episodes = 0
         self.last_episode_scores = []
@@ -84,7 +84,7 @@ class q_learning(object):
         self.score = theworld.world_score
         #self.logger.error(f'Pli score: {self.score}')
         self.end = theworld.end
-        self.reward = theworld.reward
+        #self.reward = theworld.reward
 
     def act(self, world):
         """
@@ -142,9 +142,18 @@ class q_learning(object):
         # If we are replaying, don't learn
         if not args.replayfile:
             try:
+                reward = self.score - self.prev_score
+                # Get the value of Q(s', a')
                 state_max_value = np.argmax(self.q_table[self.current_state])
-                self.q_table[self.prev_state][self.last_action] = self.q_table[self.prev_state][self.last_action] + self.learning_rate * (self.reward + (self.gamma * state_max_value) - self.q_table[self.prev_state][self.last_action] ) 
-                self.logger.info(f'Prev state: {self.prev_state}, Action Values: {self.q_table[self.prev_state]}')
+                # Update Q(s, a)
+                self.q_table[self.prev_state][self.last_action] = self.q_table[self.prev_state][self.last_action] + (
+                                                self.learning_rate * (
+                                                    reward + 
+                                                    (self.gamma * self.q_table[self.current_state][state_max_value]) - 
+                                                    self.q_table[self.prev_state][self.last_action] 
+                                                    ) 
+                                                )
+                self.logger.info(f'Prev state: {self.prev_state}, Prev Action Values: {self.q_table[self.prev_state]}. Step Reward: {reward}. Next state: {self.current_state}. Next StateMaxValue: {self.q_table[self.current_state][state_max_value]}. Idx: {state_max_value}')
             except Exception as e:
                 self.logger.error(f'Error in learn: {e}')
 
@@ -277,7 +286,7 @@ def process_data(myworld, data, w):
         myworld.world_positions = data['positions']
         myworld.current_state = data['current_character_position']
         myworld.end = data['end']
-        myworld.reward = data['reward']
+        #myworld.reward = data['reward']
       
         # Print positions
         minimum_y = 10
