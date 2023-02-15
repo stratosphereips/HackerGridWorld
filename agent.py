@@ -343,7 +343,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description=f"Client for humans of th Hacker Grid World Server. Version {__version__}. Author: Sebastian Garcia, eldraco@gmail.com", usage='%(prog)s -n <screen_name> [options]')
     parser.add_argument('-v', '--verbose', help='Amount of verbosity. This shows more info about the results.', action='store', required=False, type=int)
-    parser.add_argument('-d', '--debug', help='Amount of debugging. This shows inner information about the flows.', action='store', required=False, type=int)
+    parser.add_argument('-d', '--debug', help='Amount of debugging. This shows inner information about the flows. INFO, DEBUG, ERROR, CRITICAL', action='store', required=False, type=str)
     parser.add_argument('-s', '--server', help='IP of game server.', action='store', required=False, type=str, default='127.0.0.1')
     parser.add_argument('-p', '--port', help='Port of game server.', action='store', required=False, type=int, default=9000)
     parser.add_argument('-S', '--savemodel', help='File where to save the model.', action='store', required=False, type=str, default='model.out')
