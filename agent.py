@@ -94,9 +94,6 @@ class q_learning(object):
         When the episode finishes, we automatically receive the new world, so 
         new states are ready.
         """
-        # Update world
-        self.update_world(world)
-
         # First select an action from the exploratory policy
         action = self.choose_action()
         return action
@@ -139,6 +136,9 @@ class q_learning(object):
         Update the target policy to learn from the
         last step
         """
+        # Update world
+        self.update_world(world)
+
         # If we are replaying, don't learn
         if not args.replayfile:
             try:
