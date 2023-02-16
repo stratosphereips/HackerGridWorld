@@ -174,7 +174,7 @@ class q_learning(object):
         if not args.replayfile:
             # Store best model
             if self.score > self.best_score:
-                self.logger.critical(f'Saving model of behavioral policy to due best score ever. After {self.episodes} episodes, score: {self.score}. File names "{self.behavioral_model_filename}*"')
+                self.logger.critical(f'Saving model of behavioral policy due to best score ever. After {self.episodes} episodes, score: {self.score}. Files "{self.behavioral_model_filename}*"')
                 # Save txt
                 with open(self.behavioral_model_filename + '.txt', 'w+') as fi:
                     fi.write(str(self.q_table))
@@ -184,7 +184,7 @@ class q_learning(object):
 
             if self.episodes % self.n_episodes_evaluate == 0:
                 avg_scores = np.average(self.last_episode_scores)
-                self.logger.critical(f'Episodes elapsed: {self.episodes}. Avg Scores in last 100 episodes: {avg_scores:.4f}. Epsilon: {self.epsilon:.5f}. Saving target policy in file names "{self.target_model_filename}*"')
+                self.logger.critical(f'Episodes elapsed: {self.episodes}. Avg Scores in last 100 episodes: {avg_scores:.4f}. Epsilon: {self.epsilon:.5f}. Saving target policy in files "{self.target_model_filename}*"')
                 # Save txt
                 with open(self.target_model_filename + '.txt', 'w+') as fi:
                     fi.write(str(self.q_table))
