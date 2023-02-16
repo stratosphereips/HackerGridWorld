@@ -288,7 +288,6 @@ def process_data(myworld, data, w):
         myworld.world_positions = data['positions']
         myworld.current_state = data['current_character_position']
         myworld.end = data['end']
-        #myworld.reward = data['reward']
       
         # Print positions
         minimum_y = 10
@@ -348,7 +347,6 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--debug', help='Amount of debugging. This shows inner information about the flows. INFO, DEBUG, ERROR, CRITICAL', action='store', required=False, type=str)
     parser.add_argument('-s', '--server', help='IP of game server.', action='store', required=False, type=str, default='127.0.0.1')
     parser.add_argument('-p', '--port', help='Port of game server.', action='store', required=False, type=int, default=9000)
-    parser.add_argument('-S', '--savemodel', help='File where to save the model.', action='store', required=False, type=str, default='model.out')
     parser.add_argument('-c', '--configfile', help='Configuration file.', action='store', required=True, type=str)
     parser.add_argument('-r', '--replayfile', help='Used this saved model strategy to play in human time.', action='store', required=False, type=str)
 
