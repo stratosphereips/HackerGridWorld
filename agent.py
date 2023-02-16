@@ -48,6 +48,9 @@ class q_learning(object):
         self.episodes = 0
         self.last_episode_scores = []
         self.best_score = 0.0
+        # Where to save the models
+        self.behavioral_model_filename = 'behavioral-model'
+        self.target_model_filename = 'target-model'
         # If repaly mode, load the model
         if args.replayfile:
             # Load
@@ -168,21 +171,27 @@ class q_learning(object):
         #self.logger.error(f'Episode score: {self.score}')
         self.episodes += 1
 
-        # Store best model
-        if self.score > self.best_score:
-            self.logger.critical(f'Saving model for best score of {self.n_episodes_evaluate} episodes: {self.score}')
-            # Save txt
-            with open(args.savemodel + '.txt', 'w+') as fi:
-                fi.write(str(self.q_table))
-            # Save npy
-            np.save(args.savemodel, self.q_table)
-            self.best_score = self.score
+        if not args.replayfile:
+            # Store best model
+            if self.score > self.best_score:
+                self.logger.critical(f'Saving model of behavioral policy to due best score ever. After {self.episodes} episodes, score: {self.score}. File names "{self.behavioral_model_filename}*"')
+                # Save txt
+                with open(self.behavioral_model_filename + '.txt', 'w+') as fi:
+                    fi.write(str(self.q_table))
+                # Save npy
+                np.save(self.behavioral_model_filename, self.q_table)
+                self.best_score = self.score
 
-        if self.episodes % self.n_episodes_evaluate == 0:
-            avg_scores = np.average(self.last_episode_scores)
-            self.logger.critical(f'Episodes elapsed: {self.episodes}. Avg Scores in last 100 episodes: {avg_scores}. Epsilon: {self.epsilon}')
+            if self.episodes % self.n_episodes_evaluate == 0:
+                avg_scores = np.average(self.last_episode_scores)
+                self.logger.critical(f'Episodes elapsed: {self.episodes}. Avg Scores in last 100 episodes: {avg_scores:.4f}. Epsilon: {self.epsilon:.5f}. Saving target policy in file names "{self.target_model_filename}*"')
+                # Save txt
+                with open(self.target_model_filename + '.txt', 'w+') as fi:
+                    fi.write(str(self.q_table))
+                # Save npy
+                np.save(self.target_model_filename, self.q_table)
 
-        self.logger.info('Episode of Agent ended.')
+            self.logger.info('Episode of Agent ended.')
 
 
 class Game(object):
