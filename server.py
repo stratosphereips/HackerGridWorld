@@ -134,7 +134,7 @@ class Game_HGW(object):
         self.goal['icon'] = "X"
         self.goal['x'] = 9 
         self.goal['y'] = 0 
-        self.goal['score'] = 100
+        self.goal['score'] = 500
         self.goal['taken'] = False 
 
         # Output gate of world
