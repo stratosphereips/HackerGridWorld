@@ -58,26 +58,34 @@ async def handle_new_client(reader, writer):
         logger.info(f"Received {message!r} from {addr}")
 
         myworld.process_input_key(message)
-        #logger.info(f"World was updated: {myworld.character}")
 
         # Convert world to json before sending
         world_json = json.dumps(world_env)
 
         logger.info(f"Sending: {world_json!r}")
         await send_world(writer, world_json)
-        await writer.drain()
+        try:
+            await writer.drain()
+        except ConnectionResetError:
+            logger.info(f'Connection lost. Client disconnected.')
 
         # If the game ended, reset and resend
         if myworld.world['end']:
             myworld = Game_HGW(score=confjson.get('start_score', 500))
             world_env = myworld.get_world()
 
+            # Necessary to give time to the socket to send the old world before sending the new. If not they look like one message
+            time.sleep(0.01)
+
             # Send the first world
             # Convert world to json before sending
             world_json = json.dumps(world_env)
             logger.info(f"Sending: {world_json!r}")
             await send_world(writer, world_json)
-            await writer.drain()
+            try:
+                await writer.drain()
+            except ConnectionResetError:
+                logger.info(f'Connection lost. Client disconnected.')
 
 
 
@@ -212,11 +220,18 @@ class Game_HGW(object):
     def check_end(self):
         """
         Check the end
+        
+        Two OR conditions
+        - If the score is 0 then the game ends
+        - If the output gate was crossed, the game ends
         """
         if self.world['score'] <= 0:
             self.world['end'] = True
+            return True
         if self.output_gate['taken'] == True:
             self.world['end'] = True
+            return True
+        return False
 
     def process_input_key(self, key):
         """
