@@ -142,7 +142,7 @@ class Game_HGW(object):
         self.output_gate['icon'] = "O"
         self.output_gate['x'] = 9 
         self.output_gate['y'] = 9 
-        self.output_gate['score'] = 200 
+        self.output_gate['score'] = 400 
         self.output_gate['taken'] = False 
 
         # Move penalty
