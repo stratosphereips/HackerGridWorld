@@ -40,7 +40,7 @@ async def handle_new_client(reader, writer):
     logger.info(f"Handling data from client {addr}")
 
     # Get a new world
-    myworld = Game_HGW(score=confjson.get('STEPS', 500))
+    myworld = Game_HGW(score=confjson.get('start_score', 500))
     world_env = myworld.get_world()
 
     # Send the first world
@@ -69,7 +69,7 @@ async def handle_new_client(reader, writer):
 
         # If the game ended, reset and resend
         if myworld.world['end']:
-            myworld = Game_HGW(score=confjson.get('STEPS', 500))
+            myworld = Game_HGW(score=confjson.get('start_score', 500))
             world_env = myworld.get_world()
 
             # Send the first world
@@ -89,32 +89,35 @@ class Game_HGW(object):
     def __init__(self, score=100):
         """
         Initialize the web server
-        Returns a dictionary
+        Returns a game object
 
         The game has a world, with characters and positions
         it also has rules, scores actions and dynamics of movements
         """
-        self.conf = confjson.get('world', None)
+        # Get stuff from the conf file
+        self.conf_world = confjson.get('world', None)
+
         # Create the world as a dict
         self.world = {}
-        self.world["size_x"] = self.conf.get("size_x", None)
-        self.world["size_y"] = self.conf.get("size_y", None)
+        self.world["size_x"] = self.conf_world.get("size_x", None)
+        self.world["size_y"] = self.conf_world.get("size_y", None)
         self.world["min_x"] = 0
         self.world["min_y"] = 0
-        # size_x and size_y are the length, but it starts in 0
+        # size_x and size_y are the length
         self.world["max_x"] = self.world["size_x"] - 1
         self.world["max_y"] = self.world["size_y"] - 1
         self.world["size"] = str(self.world["size_x"]) + 'x'+ str(self.world["size_y"])
         self.world["score"] = score
         self.prev_score = self.world["score"]
-        #self.world["reward"] = 0
+        # Positions are stored as continous list, from 0 to 99 (for 100 positions example)
         self.world["positions"] = []
 
         # Set character
+
         self.character = {}
         self.character['icon'] = "W"
-        self.character['x'] = 5 
-        self.character['y'] = 5 
+        self.character['x'] = confjson.get('character', None).get("start_position_x", 5)
+        self.character['y'] = confjson.get('character', None).get("start_position_y", 5) 
         # Set the state of the character in the world
         self.world['current_character_position'] = self.character['x'] + (self.character['y'] * self.world['size_x'])
 
@@ -143,24 +146,7 @@ class Game_HGW(object):
         # Iconography
         self.background = ' '
 
-        # To do emoji by emoji
-        # fill top and bottom
-        """
-        top_line = 0
-        bottom_line = 9
-        for x in range(size_x):
-            positions[x + (top_line * size_x)] = ":bus:"
-            positions[x + (bottom_line * size_x)] = ":bus:"
-
-        # Fill vertical borders
-        right_border = 9
-        left_border = 0
-        for y in range(size_y):
-            positions[left_border + (y * 10)] = ":bus:"
-            positions[right_border + (y * 10)] = ":bus:"
-        """
-
-        # Fill the middle rest with emojis
+        # Fill the positions of the world with background
         self.world['positions'][0:9] = [self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background]
         self.world['positions'][10:19] = [self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background]
         self.world['positions'][20:29] = [self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background]
@@ -172,17 +158,13 @@ class Game_HGW(object):
         self.world['positions'][80:89] = [self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background]
         self.world['positions'][90:99] = [self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background]
 
-        # Invidivual emojis
-        #y_line = 5
-        #x_line = 5
-        #self.positions[x_line + (y_line * self.size_x)] = ":ghost:"
-
         # Goal
         self.world['positions'][self.goal['x'] + (self.goal['y'] * self.world['size_x'])] = self.goal['icon']
 
         # Character
         self.world['positions'][self.character['x'] + (self.character['y'] * self.world['size_x'])] = self.character['icon']
-
+        
+        # Add the fixed objects
         self.put_fixed_items()
 
     def put_fixed_items(self):
@@ -215,7 +197,7 @@ class Game_HGW(object):
 
     def check_collisions(self):
         """
-        Check goal of world and character 
+        Check goal of world and other collisions
         """
         # Check goal
         if self.character['x'] == self.goal['x'] and self.character['y'] == self.goal['y'] and not self.goal['taken']:
@@ -273,20 +255,15 @@ class Game_HGW(object):
         # Put fixed objects back
         self.put_fixed_items()
 
-        ## Set reward
-        #if self.world['end']:
-            ## If it is the ending position, the reward is the whole remaining score
-            #self.world['reward'] = self.world['score']
-        #else:
-            #self.world['reward'] = self.world['score'] - self.prev_score 
         self.prev_score = self.world['score']
 
         logging.info(f"Score after key: {self.world['score']}")
-        #logging.info(f"Reward after key: {self.world['reward']}")
 
         # Cooldown period
         # Each key inputted is forced to wait a little
-        time.sleep(confjson.get('SPEED', 0))
+        # This should be at least 0.1 for human play or replay mode
+        # Should be 0 for agents to play
+        time.sleep(confjson.get('speed', 0))
 
 
 # Main
@@ -307,7 +284,7 @@ if __name__ == '__main__':
 
     try:
         logging.debug('Server start')
-        asyncio.run(server(confjson.get('HOST', None), confjson.get('PORT', None)))
+        asyncio.run(server(confjson.get('host', None), confjson.get('port', None)))
     except Exception as e:
         logging.error(f'Error: {e}')
     finally:
