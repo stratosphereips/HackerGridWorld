@@ -209,8 +209,9 @@ class Game_HGW(object):
         """
         # Check goal
         if self.character['x'] == self.goal['x'] and self.character['y'] == self.goal['y'] and not self.goal['taken']:
-            self.world['score'] += self.goal['score']
-            self.goal['taken'] = True
+            if not self.goal['taken']:
+                self.world['score'] += self.goal['score']
+                self.goal['taken'] = True
 
         # Check output_gate
         if self.character['x'] == self.output_gate['x'] and self.character['y'] == self.output_gate['y'] and not self.output_gate['taken']:
