@@ -24,7 +24,7 @@ A client-server game to train and play with remote reinforcement learning in a H
 
 ## Train a q-learning reinforcement learning agent
 
-    python ./agent.py
+    python ./agent.py -c HGW.agent-qlearning.conf
 
 # Rules of the game
 
@@ -40,6 +40,63 @@ A client-server game to train and play with remote reinforcement learning in a H
 - If you try to move outside the grid, you will stay in the last valid position of the grid. 
 - Every action taken has a penalty of -1 in the score. If you keep moving outside the grid with actions, even if your position does not change, you are penalized.
 
+# Define the world
+The whole world is defined in the configuration file of the server, such as:
+
+    {
+    "world": { 
+        "size_x": 10,
+        "size_y": 10
+            },
+    "host": "127.0.0.1",
+    "port": 9000,
+    "start_score": 500,
+    "speed": 0,
+    "objects": {
+        "character": {
+            "x": 5, 
+            "y": 5,
+            "icon": "W"
+        },
+        "output_gate": {
+            "x": 9, 
+            "y": 9,
+            "score": 100,
+            "icon": "O",
+            "taken": false,
+            "ends_game": true,
+            "consumable": false
+        },
+        "goal1": {
+            "x": 9, 
+            "y": 0,
+            "score": 500,
+            "icon": "X",
+            "taken": false,
+            "ends_game": false,
+            "consumable": true
+        },
+        "goal2": {
+            "x": 3, 
+            "y": 3,
+            "score": 700,
+            "icon": "X",
+            "taken": false,
+            "ends_game": false,
+            "consumable": true
+        }
+    }
+    }
+
+In here you can add objects with:
+
+- x and y : the position in the grid (x = 0 is the leftmost column, y = 0 is the topmost row)
+- score: The amount of points/reward given to the agent for finding the object (can be negative)
+- consumable: if it can be consumed ('eaten') and must disappear after it is found once
+- ends_game: if finding this object ends the game
+- taken: if the object was already taken or not
+- icon: The ASCII icon to assign to it
+
 # Why remote server as a game environment
 The idea of having a world in as TCP server is to have this features:
 - It forces you NOT to control the server completely, maybe is on the cloud, part of a CTF, or controlled by someone else. The idea is that it is an unknown world for you. Your code doesn't have to, and can not control, modify or change the server. 
@@ -47,6 +104,7 @@ The idea of having a world in as TCP server is to have this features:
 - You can connect many clients/agents simultaneously to the game.
 - You can also ask to reply any strategy since the world doesn't care who plays or how they play.
 - The world is slower than an in-memory environment, yes. So probably strategies need to adapt.
+- You can have multiple servers simultaneously, for example to train an agent and to visualize the agent playing at the same time without stopping the learning.
 
 # Communication with clients/agents and actions
 The server gives a new _fresh_ world as a JSON to any client connecting. The JSON has the following parts:
