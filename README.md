@@ -195,3 +195,10 @@ The curses library really doesn't like the varying width of emojis, so it keep b
 ## Real Time learning
 
 [![Real Time Learning](https://github.com/stratosphereips/HackerGridWorld/raw/main/images/real-time-screenshoot.png)](https://www.youtube.com/watch?v=1X0rQofcQ10)
+
+# TODO
+
+- Add a wrapper for gym style env, so you  can run other agents on this world
+- Try to solve the issue of q-learning not able to find 2 goals simultaneously. 
+    - Stochastic qtable. Not use MAX(), so not use q-learning.
+- 'Block by reward'. The best block is not to put a negative reward, but to put a smaller reward before the big one. Honeypot idea.
