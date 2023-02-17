@@ -189,3 +189,9 @@ The curses library really doesn't like the varying width of emojis, so it keep b
 <p align="center">
 <img src="https://github.com/stratosphereips/HackerGridWorld/raw/main/client.gif" width="450px" title="HGW in action.">
 </p>
+
+# Videos
+
+## Real Time learning
+
+[![Real Time Learning](https://github.com/stratosphereips/HackerGridWorld/raw/main/images/real-time-screenshoot.png)](https://www.youtube.com/watch?v=1X0rQofcQ10)
