@@ -360,7 +360,7 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--replayfile', help='Used this saved model strategy to play in human time.', action='store', required=False, type=str)
 
     args = parser.parse_args()
-    logging.basicConfig(filename='agent.log', filemode='a', format='%(asctime)s %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S',level=logging.ERROR)
+    logging.basicConfig(filename='agent.log', filemode='a', format='%(asctime)s %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S',level=logging.CRITICAL)
 
     with open(args.configfile, 'r') as jfile:
         confjson = json.load(jfile)
