@@ -40,7 +40,7 @@ async def handle_new_client(reader, writer):
     logger.info(f"Handling data from client {addr}")
 
     # Get a new world
-    myworld = Game_HGW(score=confjson.get('start_score', 500))
+    myworld = Game_HGW()
     world_env = myworld.get_world()
 
     # Send the first world
@@ -71,7 +71,9 @@ async def handle_new_client(reader, writer):
 
         # If the game ended, reset and resend
         if myworld.world['end']:
-            myworld = Game_HGW(score=confjson.get('start_score', 500))
+            del myworld
+            
+            myworld = Game_HGW()
             world_env = myworld.get_world()
 
             # Necessary to give time to the socket to send the old world before sending the new. If not they look like one message
@@ -94,62 +96,38 @@ class Game_HGW(object):
     Class Game_HGW
     Organizes and implements the logic of the game
     """
-    def __init__(self, score=100):
+    def __init__(self):
         """
-        Initialize the web server
+        Initialize the game env
         Returns a game object
 
         The game has a world, with characters and positions
         it also has rules, scores actions and dynamics of movements
         """
-        # Get stuff from the conf file
-        self.conf_world = confjson.get('world', None)
+        # Read the conf
+        with open(args.configfile, 'r') as jfile:
+            confjson = json.load(jfile)
 
         # Create the world as a dict
+        logging.info(f"Starting a new world")
         self.world = {}
-        self.world["size_x"] = self.conf_world.get("size_x", None)
-        self.world["size_y"] = self.conf_world.get("size_y", None)
+        self.world["size_x"] = confjson['world'].get("size_x", None)
+        self.world["size_y"] = confjson['world'].get("size_y", None)
         self.world["min_x"] = 0
         self.world["min_y"] = 0
         # size_x and size_y are the length
         self.world["max_x"] = self.world["size_x"] - 1
         self.world["max_y"] = self.world["size_y"] - 1
         self.world["size"] = str(self.world["size_x"]) + 'x'+ str(self.world["size_y"])
-        self.world["score"] = score
+        self.world["score"] = confjson['world'].get("score", 500)
         self.prev_score = self.world["score"]
         # Positions are stored as continous list, from 0 to 99 (for 100 positions example)
         self.world["positions"] = []
-
-        # Set character
-
-        self.character = {}
-        self.character['icon'] = "W"
-        self.character['x'] = confjson.get('character', None).get("start_position_x", 5)
-        self.character['y'] = confjson.get('character', None).get("start_position_y", 5) 
-        # Set the state of the character in the world
-        self.world['current_character_position'] = self.character['x'] + (self.character['y'] * self.world['size_x'])
-
-        # Goal of world
-        self.goal = {}
-        self.goal['icon'] = "X"
-        self.goal['x'] = 9 
-        self.goal['y'] = 0 
-        self.goal['score'] = 500
-        self.goal['taken'] = False 
-
-        # Output gate of world
-        self.output_gate = {}
-        self.output_gate['icon'] = "O"
-        self.output_gate['x'] = 9 
-        self.output_gate['y'] = 9 
-        self.output_gate['score'] = 400 
-        self.output_gate['taken'] = False 
-
         # Move penalty
         self.move_penalty = 1
-
         # Track the end
         self.world['end'] = False
+
 
         # Iconography
         self.background = ' '
@@ -166,21 +144,77 @@ class Game_HGW(object):
         self.world['positions'][80:89] = [self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background]
         self.world['positions'][90:99] = [self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background,self.background]
 
+        # Load all objects in the world
+        self.objects = confjson['objects']
+        logging.info(f"conf obj: {confjson['objects']}")
+
+        # The character object is special, needs to be in the world for the client
+        self.world['current_character_position'] = self.objects['character']['x'] + (self.objects['character']['y'] * self.world['size_x'])
+
+        # Init objects that do need to appear in the world for the client
+        for object in self.objects:
+            # positions
+            self.world['positions'][
+                    self.objects[object]['x'] 
+                    + (self.objects[object]['y'] 
+                        * self.world['size_x'])
+                    ] = self.objects[object]['icon']
+
+        logging.info(f"Objects: {self.objects}")
+
+        """
+        self.character = {}
+        self.character['icon'] = "W"
+        self.character['x'] = confjson['objects']['character']["start_position_x"]
+        self.character['y'] = confjson['objects']['character']["start_position_y"]
+        # Set the state of the character in the world
+        self.world['current_character_position'] = self.character['x'] + (self.character['y'] * self.world['size_x'])
+
+        # Goal of world
+        self.goal = {}
+        self.goal['icon'] = "X"
+        self.goal['x'] = 9 
+        self.goal['y'] = 0 
+        self.goal['score'] = 500
+        self.goal['taken'] = False 
+
+        # Output gate of world
+        self.output_gate = {}
+        self.output_gate['icon'] = "O"
+        self.output_gate['x'] = 9 
+        self.output_gate['y'] = 9 
+        self.output_gate['score'] = 500 
+        self.output_gate['taken'] = False 
+        """
+
+
+
+        """
         # Goal
         self.world['positions'][self.goal['x'] + (self.goal['y'] * self.world['size_x'])] = self.goal['icon']
 
         # Character
         self.world['positions'][self.character['x'] + (self.character['y'] * self.world['size_x'])] = self.character['icon']
+        """
         
         # Add the fixed objects
-        self.put_fixed_items()
+        # self.put_fixed_items()
 
     def put_fixed_items(self):
         """
         Add the fixed items
         """
         # output gate
-        self.world['positions'][self.output_gate['x'] + (self.output_gate['y'] * self.world['size_x'])] = self.output_gate['icon']
+        #self.world['positions'][self.objects['output_gate']['x'] + (self.objects['output_gate']['y'] * self.world['size_x'])] = self.objects['output_gate']['icon']
+        for object in self.objects:
+            # positions
+            if not 'character' in object:
+                if self.objects[object]['consumable'] == False or (self.objects[object]['consumable'] == True and self.objects[object]['taken'] == False):
+                    self.world['positions'][
+                            self.objects[object]['x'] 
+                            + (self.objects[object]['y'] 
+                                * self.world['size_x'])
+                            ] = self.objects[object]['icon']
 
     def get_world(self):
         """
@@ -193,30 +227,42 @@ class Game_HGW(object):
         Check boundaries of world and character 
         """
         # Check boundaries
-        if self.character['x'] >= self.world['max_x']:
-            self.character['x'] = self.world['max_x']
-        elif self.character['x'] <= self.world['min_x']:
-            self.character['x'] = self.world['min_x']
+        if self.objects['character']['x'] >= self.world['max_x']:
+            self.objects['character']['x'] = self.world['max_x']
+        elif self.objects['character']['x'] <= self.world['min_x']:
+            self.objects['character']['x'] = self.world['min_x']
 
-        if self.character['y'] >= self.world['max_y']:
-            self.character['y'] = self.world['max_y']
-        elif self.character['y'] <= self.world['min_y']:
-            self.character['y'] = self.world['min_y']
+        if self.objects['character']['y'] >= self.world['max_y']:
+            self.objects['character']['y'] = self.world['max_y']
+        elif self.objects['character']['y'] <= self.world['min_y']:
+            self.objects['character']['y'] = self.world['min_y']
 
     def check_collisions(self):
         """
         Check goal of world and other collisions
         """
-        # Check goal
-        if self.character['x'] == self.goal['x'] and self.character['y'] == self.goal['y'] and not self.goal['taken']:
-            if not self.goal['taken']:
-                self.world['score'] += self.goal['score']
-                self.goal['taken'] = True
+        for object in self.objects:
+            # positions
+            if not 'character' in object:
+                if self.objects[object]['consumable'] == False or (self.objects[object]['consumable'] == True and self.objects[object]['taken'] == False):
+                    if self.objects[object]['x'] == self.objects['character']['x'] and self.objects[object]['y'] == self.objects['character']['y']:
+                        self.world['score'] += self.objects[object]['score']
+                        self.objects[object]['taken'] = True
+
+
+        """
+        # Check objects
+        if self.objects['character']['x'] == self.objects['goal']['x'] and self.objects['character']['y'] == self.objects['goal']['y'] and not self.objects['goal']['taken']:
+            if not self.objects['goal']['taken']:
+                self.world['score'] += self.objects['goal']['score']
+                self.objects['goal']['taken'] = True
 
         # Check output_gate
-        if self.character['x'] == self.output_gate['x'] and self.character['y'] == self.output_gate['y'] and not self.output_gate['taken']:
-            self.world['score'] += self.output_gate['score']
-            self.output_gate['taken'] = True
+        if self.objects['character']['x'] == self.objects['output_gate']['x'] and self.objects['character']['y'] == self.objects['output_gate']['y'] and not self.objects['output_gate']['taken']:
+            if not self.objects['output_gate']['taken']:
+                self.world['score'] += self.objects['output_gate']['score']
+                self.objects['output_gate']['taken'] = True
+        """
 
     def check_end(self):
         """
@@ -229,7 +275,7 @@ class Game_HGW(object):
         if self.world['score'] <= 0:
             self.world['end'] = True
             return True
-        if self.output_gate['taken'] == True:
+        if self.objects['output_gate']['taken'] == True:
             self.world['end'] = True
             return True
         return False
@@ -241,16 +287,16 @@ class Game_HGW(object):
 
         # Find the new positions of the character
         # Delete the current character
-        self.world['positions'][self.character['x'] + (self.character['y'] * self.world['size_x'])] = self.background
+        self.world['positions'][self.objects['character']['x'] + (self.objects['character']['y'] * self.world['size_x'])] = self.background
         if "UP" in key:
-            self.character['y'] -= 1
+            self.objects['character']['y'] -= 1
         elif "DOWN" in key:
-            self.character['y'] += 1
+            self.objects['character']['y'] += 1
         elif "RIGHT" in key:
-            self.character['x'] += 1
+            self.objects['character']['x'] += 1
         elif "LEFT" in key:
-            self.character['x'] -= 1
-        logging.info(f"The char was moved to {self.character['x']} {self.character['y']} ")
+            self.objects['character']['x'] -= 1
+        logging.info(f"The char was moved to {self.objects['character']['x']} {self.objects['character']['y']} ")
 
         # Compute the character move penalty
         self.world['score'] -= self.move_penalty
@@ -265,8 +311,8 @@ class Game_HGW(object):
         self.check_end()
 
         # Move the character
-        self.world['positions'][self.character['x'] + (self.character['y'] * self.world['size_x'])] = self.character['icon']
-        self.world['current_character_position'] = self.character['x'] + (self.character['y'] * self.world['size_x'])
+        self.world['positions'][self.objects['character']['x'] + (self.objects['character']['y'] * self.world['size_x'])] = self.objects['character']['icon']
+        self.world['current_character_position'] = self.objects['character']['x'] + (self.objects['character']['y'] * self.world['size_x'])
 
         # Put fixed objects back
         self.put_fixed_items()
