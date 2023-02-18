@@ -205,9 +205,9 @@ if __name__ == '__main__':
 
     try:
         curses.wrapper(main)
-    except KeyboardInterrupt:
+    except KeyboardInterrupt as requested_exit:
         logging.debug('Terminating by KeyboardInterrupt')
-        raise SystemExit
+        raise SystemExit from requested_exit
     except Exception as e:
         logging.error(f'Exception in __main__: {e}')
     finally:
