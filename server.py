@@ -72,7 +72,7 @@ async def handle_new_client(reader, writer):
         # If the game ended, reset and resend
         if myworld.world['end']:
             del myworld
-            
+
             myworld = Game_HGW()
             world_env = myworld.get_world()
 
@@ -155,8 +155,8 @@ class Game_HGW(object):
         for object in self.objects:
             # positions
             self.world['positions'][
-                    self.objects[object]['x'] 
-                    + (self.objects[object]['y'] 
+                    self.objects[object]['x']
+                    + (self.objects[object]['y']
                         * self.world['size_x'])
                     ] = self.objects[object]['icon']
 
@@ -173,18 +173,18 @@ class Game_HGW(object):
         # Goal of world
         self.goal = {}
         self.goal['icon'] = "X"
-        self.goal['x'] = 9 
-        self.goal['y'] = 0 
+        self.goal['x'] = 9
+        self.goal['y'] = 0
         self.goal['score'] = 500
-        self.goal['taken'] = False 
+        self.goal['taken'] = False
 
         # Output gate of world
         self.output_gate = {}
         self.output_gate['icon'] = "O"
-        self.output_gate['x'] = 9 
-        self.output_gate['y'] = 9 
-        self.output_gate['score'] = 500 
-        self.output_gate['taken'] = False 
+        self.output_gate['x'] = 9
+        self.output_gate['y'] = 9
+        self.output_gate['score'] = 500
+        self.output_gate['taken'] = False
         """
 
 
@@ -196,7 +196,7 @@ class Game_HGW(object):
         # Character
         self.world['positions'][self.character['x'] + (self.character['y'] * self.world['size_x'])] = self.character['icon']
         """
-        
+
         # Add the fixed objects
         # self.put_fixed_items()
 
@@ -211,8 +211,8 @@ class Game_HGW(object):
             if not 'character' in object:
                 if self.objects[object]['consumable'] == False or (self.objects[object]['consumable'] == True and self.objects[object]['taken'] == False):
                     self.world['positions'][
-                            self.objects[object]['x'] 
-                            + (self.objects[object]['y'] 
+                            self.objects[object]['x']
+                            + (self.objects[object]['y']
                                 * self.world['size_x'])
                             ] = self.objects[object]['icon']
 
@@ -224,7 +224,7 @@ class Game_HGW(object):
 
     def check_boundaries(self):
         """
-        Check boundaries of world and character 
+        Check boundaries of world and character
         """
         # Check boundaries
         if self.objects['character']['x'] >= self.world['max_x']:
@@ -267,7 +267,7 @@ class Game_HGW(object):
     def check_end(self):
         """
         Check the end
-        
+
         Two OR conditions
         - If the score is 0 then the game ends
         - If the output gate was crossed, the game ends
