@@ -25,7 +25,6 @@ def start_client(w, sock):
     Define the function to deal with data
     """
     try:
-
         logger = logging.getLogger('CLIENT')
         logger.info('Starting client')
 
@@ -65,10 +64,8 @@ def start_client(w, sock):
                 key = ''
                 sock.send(b' ')
             logger.info(f'Sending: {key!r}')
-
-
-    except Exception as e:
-        logging.error(f'Error in start_client: {e}')
+    except Exception as err:
+        logging.error(f"Exception in start_client: {err}")
 
 
 def check_end(myworld):
