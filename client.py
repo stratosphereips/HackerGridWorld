@@ -17,7 +17,8 @@ class Game():
     Game object
     """
     def __init__(self):
-        pass
+        self.end = False
+        self.world_score = 0
 
 def start_client(w, sock):
     """
@@ -94,7 +95,8 @@ def process_data(myworld, data, w):
         data = json.loads(data)
         myworld.size_x = int(data['size'].split('x')[0])
         myworld.size_y = int(data['size'].split('x')[1])
-        myworld.world_score = data['score']
+        myworld.current_reward = data['reward']
+        myworld.world_score += data['reward']
         myworld.world_positions = data['positions']
         myworld.end = data['end']
 
