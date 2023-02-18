@@ -188,7 +188,7 @@ def colouring(w):
         w.refresh()
 
     else:
-        w.addstr("has_colors() = False\n");
+        w.addstr("has_colors() = False\n")
         w.refresh()
 
 
