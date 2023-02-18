@@ -14,7 +14,7 @@ import emoji
 
 __version__ = 'v0.1'
 
-class Game(object):
+class Game():
     """
     Game object
     """
