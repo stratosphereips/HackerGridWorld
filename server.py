@@ -348,6 +348,6 @@ if __name__ == '__main__':
         logging.debug('Server start')
         asyncio.run(server(confjson.get('host', None), confjson.get('port', None)))
     except Exception as e:
-        logging.error(f'Error: {e}')
+        logging.error(f'Exception in __main__: {e}')
     finally:
         logging.debug('Goodbye')
