@@ -27,7 +27,7 @@ async def server(host, port):
 
 async def send_world(writer, world_json):
     """
-    send worl
+    Send the world to the client
     """
     writer.write(bytes(str(world_json).encode()))
 
