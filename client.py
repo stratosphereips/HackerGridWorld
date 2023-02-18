@@ -209,7 +209,10 @@ if __name__ == '__main__':
 
     try:
         curses.wrapper(main)
+    except KeyboardInterrupt:
+        logging.debug('Terminating by KeyboardInterrupt')
+        raise SystemExit
     except Exception as e:
-        logging.error(f'Error: {e}')
+        logging.error(f'Exception in __main__: {e}')
     finally:
         logging.debug('Goodbye')
