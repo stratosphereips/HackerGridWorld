@@ -76,6 +76,7 @@ def check_end(myworld):
         # Game end
         logging.info(f'Game ended: Score: {myworld.world_score}')
         return True
+    return False
 
 def process_data(myworld, data, w):
     """
