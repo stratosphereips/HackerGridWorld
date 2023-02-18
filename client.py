@@ -3,7 +3,6 @@
 # Author: sebastian garcia, eldraco@gmail.com. First commit: Feb 5th 2023
 
 import argparse
-from datetime import datetime
 import logging
 import json
 import curses
