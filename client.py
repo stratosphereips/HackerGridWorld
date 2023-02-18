@@ -197,16 +197,15 @@ def colouring(w):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    parser = argparse.ArgumentParser(description=f"Client for humans of th Hacker Grid World Server. Version {__version__}. Author: Sebastian Garcia, eldraco@gmail.com", usage='%(prog)s -n <screen_name> [options]')
-    parser.add_argument('-v', '--verbose', help='Amount of verbosity. This shows more info about the results.', action='store', required=False, type=int)
-    parser.add_argument('-d', '--debug', help='Amount of debugging. This shows inner information about the flows.', action='store', required=False, type=int)
-    parser.add_argument('-s', '--server', help='IP of game server.', action='store', required=False, type=str, default='127.0.0.1')
+    parser = argparse.ArgumentParser(description=f"Client for humans of the Hacker Grid World Server. Version {__version__}. Author: Sebastian Garcia, eldraco@gmail.com", usage='%(prog)s -n <screen_name> [options]')
+    parser.add_argument('-v', '--verbose', help='Verbosity level. This shows more info about the results.', action='store', required=False, type=int)
+    parser.add_argument('-d', '--debug', help='Debugging level. This shows more information about the flows.', action='store', required=False, type=int)
+    parser.add_argument('-s', '--server', help='IP address of game server.', action='store', required=False, type=str, default='127.0.0.1')
     parser.add_argument('-p', '--port', help='Port of game server.', action='store', required=False, type=int, default=9000)
 
     args = parser.parse_args()
     logging.basicConfig(filename='client.log', filemode='a', format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S',level=logging.INFO)
     logging.info('Client started')
-
 
     try:
         curses.wrapper(main)
