@@ -94,14 +94,14 @@ def process_data(myworld, data, w):
         myworld.world_score = data['score']
         myworld.world_positions = data['positions']
         myworld.end = data['end']
-      
+
         # Print positions
         minimum_y = 10
         for x in range(myworld.size_x):
             for y in range(myworld.size_y):
                 w.addstr(y + minimum_y, x, emoji.emojize(str(myworld.world_positions[x + (y * 10)])))
         # Print score
-        w.addstr(minimum_y + myworld.size_y + 1, 0, f"Score: {str(myworld.world_score):>5}") 
+        w.addstr(minimum_y + myworld.size_y + 1, 0, f"Score: {str(myworld.world_score):>5}")
     except Exception as e:
         logging.error(f'Error in process_data: {e}')
 
@@ -124,7 +124,7 @@ def main(w):
 
     Its purpose is to call several other functions to demonstrate
     some of the functionality of curses.
-    
+
     w is the curses window
     """
 
@@ -140,7 +140,7 @@ def main(w):
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((server, port))
-    
+
     # Start the client
     start_client(w, sock)
 
