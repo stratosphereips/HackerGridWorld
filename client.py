@@ -30,7 +30,8 @@ def start_client(w, sock):
 
         myworld = Game()
 
-        while True:
+        stop_signal = False
+        while not stop_signal:
             # Get data
             net_data = sock.recv(2048)
             logger.info(f'Received: {net_data.decode()!r}')
@@ -48,22 +49,28 @@ def start_client(w, sock):
                 process_data(myworld, net_data, w)
 
             # Get key from user and process it
-            key = get_key(myworld, w)
+            while True:
+                key = get_key(myworld, w)
 
-            if "KEY_UP" in key:
-                sock.send(b'UP')
-            elif "KEY_DOWN" in key:
-                sock.send(b'DOWN')
-            elif "KEY_RIGHT" in key:
-                sock.send(b'RIGHT')
-            elif "KEY_LEFT" in key:
-                sock.send(b'LEFT')
-            elif "q" in key:
-                break
-            else:
-                key = ''
-                sock.send(b' ')
-            logger.info(f'Sending: {key!r}')
+                if "KEY_UP" in key:
+                    sock.send(b'UP')
+                    logger.info(f'Sending: {key!r}')
+                    break
+                elif "KEY_DOWN" in key:
+                    sock.send(b'DOWN')
+                    logger.info(f'Sending: {key!r}')
+                    break
+                elif "KEY_RIGHT" in key:
+                    sock.send(b'RIGHT')
+                    logger.info(f'Sending: {key!r}')
+                    break
+                elif "KEY_LEFT" in key:
+                    sock.send(b'LEFT')
+                    logger.info(f'Sending: {key!r}')
+                    break
+                elif "q" in key:
+                    stop_signal = True
+                    break
     except Exception as err:
         logging.error(f"Exception in start_client: {err}")
 
