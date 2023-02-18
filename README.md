@@ -21,6 +21,8 @@ A client-server game to train and play with remote reinforcement learning in a H
 ## Play as human
 
     python ./client.py
+    
+Use they keys UP, DOWN, LEFT, RIGHT to play.
 
 ## Train a q-learning reinforcement learning agent
 
@@ -43,50 +45,52 @@ A client-server game to train and play with remote reinforcement learning in a H
 # Define the world
 The whole world is defined in the configuration file of the server, such as:
 
-    {
-    "world": { 
-        "size_x": 10,
-        "size_y": 10
-            },
-    "host": "127.0.0.1",
-    "port": 9000,
-    "start_score": 500,
-    "speed": 0,
-    "objects": {
-        "character": {
-            "x": 5, 
-            "y": 5,
-            "icon": "W"
+```json
+{
+"world": { 
+    "size_x": 10,
+    "size_y": 10
         },
-        "output_gate": {
-            "x": 9, 
-            "y": 9,
-            "score": 100,
-            "icon": "O",
-            "taken": false,
-            "ends_game": true,
-            "consumable": false
-        },
-        "goal1": {
-            "x": 9, 
-            "y": 0,
-            "score": 500,
-            "icon": "X",
-            "taken": false,
-            "ends_game": false,
-            "consumable": true
-        },
-        "goal2": {
-            "x": 3, 
-            "y": 3,
-            "score": 700,
-            "icon": "X",
-            "taken": false,
-            "ends_game": false,
-            "consumable": true
-        }
+"host": "127.0.0.1",
+"port": 9000,
+"start_score": 500,
+"speed": 0,
+"objects": {
+    "character": {
+        "x": 5, 
+        "y": 5,
+        "icon": "W"
+    },
+    "output_gate": {
+        "x": 9, 
+        "y": 9,
+        "score": 100,
+        "icon": "O",
+        "taken": false,
+        "ends_game": true,
+        "consumable": false
+    },
+    "goal1": {
+        "x": 9, 
+        "y": 0,
+        "score": 500,
+        "icon": "X",
+        "taken": false,
+        "ends_game": false,
+        "consumable": true
+    },
+    "goal2": {
+        "x": 3, 
+        "y": 3,
+        "score": 700,
+        "icon": "X",
+        "taken": false,
+        "ends_game": false,
+        "consumable": true
     }
-    }
+}
+}
+```
 
 In here you can add objects with:
 
@@ -109,34 +113,38 @@ The idea of having a world in as TCP server is to have this features:
 # Communication with clients/agents and actions
 The server gives a new _fresh_ world as a JSON to any client connecting. The JSON has the following parts:
 
-    {"size_x": 10, 
-    "size_y": 10, 
-    "min_x": 0, 
-    "min_y": 0, 
-    "max_x": 9, 
-    "max_y": 9, 
-    "size": "10x10", 
-    "score": 692, 
-    "positions": [" ", " ", " ", " ", " ", " ", " ", " ", " ", "X", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "
-    ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "
-    ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "
-    ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "O"], 
-    "current_character_position": 99, 
-    "end": true}
-
+```json
+{"size_x": 10, 
+"size_y": 10, 
+"min_x": 0, 
+"min_y": 0, 
+"max_x": 9, 
+"max_y": 9, 
+"size": "10x10", 
+"score": 692, 
+"positions": [" ", " ", " ", " ", " ", " ", " ", " ", " ", "X", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "
+", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "
+", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "
+", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "O"], 
+"current_character_position": 99, 
+"end": true}
+```
+    
 The size is sent in several forms, but that will probably change to one later. You also have the min and max positions in both axes so you know the shape of the world, but that will probably change too.
 
 When the game ends the property "end" will be true, otherwise it is false.
 
 In every step, the server sends a new JSON with the current state to the client.
 
+
 ## Actions
-After each world is sent, the server listens for actions back. The actions should be a single string of text. The current available actions are:
+The actions should be a single string of text. The current available actions are:
 
 - 'UP': To go up
 - 'DOWN': To go down
 - 'LEFT': To go left
 - 'RIGHT': To go right
+
 
 
 # Visualization
