@@ -339,7 +339,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--configfile', help='Configuration file.', action='store', required=True, type=str)
 
     args = parser.parse_args()
-    logging.basicConfig(level=logging.ERROR, format='%(name)s: %(message)s',)
+    logging.basicConfig(filename='server.log', filemode='a', format='%(asctime)s, %(name)s: %(message)s', datefmt='%H:%M:%S', level=logging.ERROR)
 
     with open(args.configfile, 'r') as jfile:
         confjson = json.load(jfile)
