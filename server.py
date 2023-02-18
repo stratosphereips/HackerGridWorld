@@ -51,37 +51,17 @@ async def handle_new_client(reader, writer):
     await writer.drain()
 
     while True:
-
-        data = await reader.read(20)
-        message = data.decode()
-
-        logger.info(f"Received {message!r} from {addr}")
-
-        myworld.process_input_key(message)
-
-        # Convert world to json before sending
-        world_json = json.dumps(world_env)
-
-        logger.info(f"Sending: {world_json!r}")
-        await send_world(writer, world_json)
         try:
-            await writer.drain()
-        except ConnectionResetError:
-            logger.info(f'Connection lost. Client disconnected.')
+            data = await reader.read(20)
+            message = data.decode()
 
-        # If the game ended, reset and resend
-        if myworld.world['end']:
-            del myworld
+            logger.info(f"Received {message!r} from {addr}")
 
-            myworld = Game_HGW()
-            world_env = myworld.get_world()
+            myworld.process_input_key(message)
 
-            # Necessary to give time to the socket to send the old world before sending the new. If not they look like one message
-            time.sleep(0.01)
-
-            # Send the first world
             # Convert world to json before sending
             world_json = json.dumps(world_env)
+
             logger.info(f"Sending: {world_json!r}")
             await send_world(writer, world_json)
             try:
@@ -89,6 +69,28 @@ async def handle_new_client(reader, writer):
             except ConnectionResetError:
                 logger.info(f'Connection lost. Client disconnected.')
 
+            # If the game ended, reset and resend
+            if myworld.world['end']:
+                del myworld
+
+                myworld = Game_HGW()
+                world_env = myworld.get_world()
+
+                # Necessary to give time to the socket to send the old world before sending the new. If not they look like one message
+                time.sleep(0.01)
+
+                # Send the first world
+                # Convert world to json before sending
+                world_json = json.dumps(world_env)
+                logger.info(f"Sending: {world_json!r}")
+                await send_world(writer, world_json)
+                try:
+                    await writer.drain()
+                except ConnectionResetError:
+                    logger.info(f'Connection lost. Client disconnected.')
+        except Exception as e:
+            logger.info(f"Client disconnected: {e}")
+            break
 
 
 class Game_HGW(object):
