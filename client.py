@@ -7,7 +7,6 @@ import logging
 import json
 import curses
 import socket
-import time
 import emoji
 
 
