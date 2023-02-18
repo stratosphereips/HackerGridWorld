@@ -27,7 +27,7 @@ async def server(host, port):
 
 async def send_world(writer, world_json):
     """
-    send worl
+    Send the world to the client
     """
     writer.write(bytes(str(world_json).encode()))
 
@@ -51,37 +51,17 @@ async def handle_new_client(reader, writer):
     await writer.drain()
 
     while True:
-
-        data = await reader.read(20)
-        message = data.decode()
-
-        logger.info(f"Received {message!r} from {addr}")
-
-        myworld.process_input_key(message)
-
-        # Convert world to json before sending
-        world_json = json.dumps(world_env)
-
-        logger.info(f"Sending: {world_json!r}")
-        await send_world(writer, world_json)
         try:
-            await writer.drain()
-        except ConnectionResetError:
-            logger.info(f'Connection lost. Client disconnected.')
+            data = await reader.read(20)
+            message = data.decode()
 
-        # If the game ended, reset and resend
-        if myworld.world['end']:
-            del myworld
-            
-            myworld = Game_HGW()
-            world_env = myworld.get_world()
+            logger.info(f"Received {message!r} from {addr}")
 
-            # Necessary to give time to the socket to send the old world before sending the new. If not they look like one message
-            time.sleep(0.01)
+            myworld.process_input_key(message)
 
-            # Send the first world
             # Convert world to json before sending
             world_json = json.dumps(world_env)
+
             logger.info(f"Sending: {world_json!r}")
             await send_world(writer, world_json)
             try:
@@ -89,6 +69,28 @@ async def handle_new_client(reader, writer):
             except ConnectionResetError:
                 logger.info(f'Connection lost. Client disconnected.')
 
+            # If the game ended, reset and resend
+            if myworld.world['end']:
+                del myworld
+
+                myworld = Game_HGW()
+                world_env = myworld.get_world()
+
+                # Necessary to give time to the socket to send the old world before sending the new. If not they look like one message
+                time.sleep(0.01)
+
+                # Send the first world
+                # Convert world to json before sending
+                world_json = json.dumps(world_env)
+                logger.info(f"Sending: {world_json!r}")
+                await send_world(writer, world_json)
+                try:
+                    await writer.drain()
+                except ConnectionResetError:
+                    logger.info(f'Connection lost. Client disconnected.')
+        except Exception as e:
+            logger.info(f"Client disconnected: {e}")
+            break
 
 
 class Game_HGW(object):
@@ -155,8 +157,8 @@ class Game_HGW(object):
         for object in self.objects:
             # positions
             self.world['positions'][
-                    self.objects[object]['x'] 
-                    + (self.objects[object]['y'] 
+                    self.objects[object]['x']
+                    + (self.objects[object]['y']
                         * self.world['size_x'])
                     ] = self.objects[object]['icon']
 
@@ -173,18 +175,18 @@ class Game_HGW(object):
         # Goal of world
         self.goal = {}
         self.goal['icon'] = "X"
-        self.goal['x'] = 9 
-        self.goal['y'] = 0 
+        self.goal['x'] = 9
+        self.goal['y'] = 0
         self.goal['score'] = 500
-        self.goal['taken'] = False 
+        self.goal['taken'] = False
 
         # Output gate of world
         self.output_gate = {}
         self.output_gate['icon'] = "O"
-        self.output_gate['x'] = 9 
-        self.output_gate['y'] = 9 
-        self.output_gate['score'] = 500 
-        self.output_gate['taken'] = False 
+        self.output_gate['x'] = 9
+        self.output_gate['y'] = 9
+        self.output_gate['score'] = 500
+        self.output_gate['taken'] = False
         """
 
 
@@ -196,7 +198,7 @@ class Game_HGW(object):
         # Character
         self.world['positions'][self.character['x'] + (self.character['y'] * self.world['size_x'])] = self.character['icon']
         """
-        
+
         # Add the fixed objects
         # self.put_fixed_items()
 
@@ -211,8 +213,8 @@ class Game_HGW(object):
             if not 'character' in object:
                 if self.objects[object]['consumable'] == False or (self.objects[object]['consumable'] == True and self.objects[object]['taken'] == False):
                     self.world['positions'][
-                            self.objects[object]['x'] 
-                            + (self.objects[object]['y'] 
+                            self.objects[object]['x']
+                            + (self.objects[object]['y']
                                 * self.world['size_x'])
                             ] = self.objects[object]['icon']
 
@@ -224,7 +226,7 @@ class Game_HGW(object):
 
     def check_boundaries(self):
         """
-        Check boundaries of world and character 
+        Check boundaries of world and character
         """
         # Check boundaries
         if self.objects['character']['x'] >= self.world['max_x']:
@@ -267,7 +269,7 @@ class Game_HGW(object):
     def check_end(self):
         """
         Check the end
-        
+
         Two OR conditions
         - If the score is 0 then the game ends
         - If the output gate was crossed, the game ends
@@ -334,12 +336,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser = argparse.ArgumentParser(description=f"Hacker Grid World Server version {__version__}. Author: Sebastian Garcia, eldraco@gmail.com", usage='%(prog)s -n <screen_name> [options]')
-    parser.add_argument('-v', '--verbose', help='Amount of verbosity. This shows more info about the results.', action='store', required=False, type=int)
-    parser.add_argument('-d', '--debug', help='Amount of debugging. This shows inner information about the flows.', action='store', required=False, type=int)
+    parser.add_argument('-v', '--verbose', help='Verbosity level. This shows more info about the results.', action='store', required=False, type=int)
+    parser.add_argument('-d', '--debug', help='Debugging level. This shows inner information about the flows.', action='store', required=False, type=int)
     parser.add_argument('-c', '--configfile', help='Configuration file.', action='store', required=True, type=str)
 
     args = parser.parse_args()
-    logging.basicConfig(level=logging.ERROR, format='%(name)s: %(message)s',)
+    logging.basicConfig(filename='server.log', filemode='a', format='%(asctime)s, %(name)s: %(message)s', datefmt='%H:%M:%S', level=logging.ERROR)
 
     with open(args.configfile, 'r') as jfile:
         confjson = json.load(jfile)
@@ -347,7 +349,10 @@ if __name__ == '__main__':
     try:
         logging.debug('Server start')
         asyncio.run(server(confjson.get('host', None), confjson.get('port', None)))
+    except KeyboardInterrupt:
+        logging.debug('Terminating by KeyboardInterrupt')
+        raise SystemExit
     except Exception as e:
-        logging.error(f'Error: {e}')
+        logging.error(f'Exception in __main__: {e}')
     finally:
         logging.debug('Goodbye')
