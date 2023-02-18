@@ -347,6 +347,9 @@ if __name__ == '__main__':
     try:
         logging.debug('Server start')
         asyncio.run(server(confjson.get('host', None), confjson.get('port', None)))
+    except KeyboardInterrupt:
+        logging.debug('Terminating by KeyboardInterrupt')
+        raise SystemExit
     except Exception as e:
         logging.error(f'Exception in __main__: {e}')
     finally:
