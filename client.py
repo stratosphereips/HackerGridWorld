@@ -82,6 +82,7 @@ def check_end(myworld):
     """
     if myworld.end:
         # Game end
+        myworld.score = 0
         logging.info(f'Game ended: Score: {myworld.world_score}')
         return True
     return False
@@ -96,7 +97,10 @@ def process_data(myworld, data, w):
         myworld.size_x = int(data['size'].split('x')[0])
         myworld.size_y = int(data['size'].split('x')[1])
         myworld.current_reward = data['reward']
-        myworld.world_score += data['reward']
+        if myworld.end:
+            myworld.world_score = 0
+        else:
+            myworld.world_score += data['reward']
         myworld.world_positions = data['positions']
         myworld.end = data['end']
 
