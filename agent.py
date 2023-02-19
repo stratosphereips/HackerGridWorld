@@ -41,16 +41,18 @@ class q_learning(object):
         self.world['size_y'] = theworld.size_y
         self.current_state = theworld.current_state
         self.prev_state = self.current_state
-        self.score = theworld.world_score
-        self.end = theworld.end
-        #self.reward = theworld.reward
+        self.score = 0
+        self.best_score = float('-inf')
+        self.last_episode_scores = []
+        self.reward = theworld.current_reward
         self.logger = logging.getLogger('AGENT')
         self.episodes = 0
-        self.last_episode_scores = []
-        self.best_score = 0.0
+        self.end = theworld.end
+
         # Where to save the models
         self.behavioral_model_filename = 'behavioral-model'
         self.target_model_filename = 'target-model'
+
         # If repaly mode, load the model
         if args.replayfile:
             # Load
@@ -59,7 +61,6 @@ class q_learning(object):
             self.epsilon_start = 0
             self.epsilon_end = 0
             self.epsilon = 0
-
         else:
             self.initialize_q_table(self.world)
 
@@ -67,14 +68,6 @@ class q_learning(object):
     def initialize_q_table(self, world):
         """
         Init the q table values
-        """
-        """
-        for x in self.world['size_x']:
-            for y in self.world['size_y']:
-                state = []
-                for action in self.actions.keys():
-                    state.append = 0
-                self.q_table.append(state)
         """
         self.q_table = np.zeros((self.world['size_x'] * self.world['size_y'], len(self.actions)))
         #self.q_table = np.random.rand(self.world['size_x'] * self.world['size_y'], len(self.actions))
@@ -89,10 +82,9 @@ class q_learning(object):
         self.prev_state = self.current_state
         self.current_state = theworld.current_state
         #self.logger.info(f'In update. now prev: {self.prev_state}. Now current {self.current_state}')
-        self.prev_score = self.score
-        self.score = theworld.world_score
+        self.reward = theworld.current_reward
+        self.score += theworld.current_reward
         self.end = theworld.end
-        #self.reward = theworld.reward
 
     def act(self, world):
         """
@@ -147,18 +139,17 @@ class q_learning(object):
         # If we are replaying, don't learn
         if not args.replayfile:
             try:
-                reward = self.score - self.prev_score
                 # Get the value of Q(s', a')
                 state_max_value = np.argmax(self.q_table[self.current_state])
                 # Update Q(s, a)
                 self.q_table[self.prev_state][self.last_action] = self.q_table[self.prev_state][self.last_action] + (
                                                 self.learning_rate * (
-                                                    reward + 
+                                                    self.reward + 
                                                     (self.gamma * self.q_table[self.current_state][state_max_value]) - 
                                                     self.q_table[self.prev_state][self.last_action] 
                                                     ) 
                                                 )
-                self.logger.info(f'Prev state: {self.prev_state}, Prev Action Values: {self.q_table[self.prev_state]}. Step Reward: {reward}. Next state: {self.current_state}. Next StateMaxValue: {self.q_table[self.current_state][state_max_value]}. Idx: {state_max_value}')
+                self.logger.info(f'Prev state: {self.prev_state}, Prev Action Values: {self.q_table[self.prev_state]}. Step Reward: {self.reward}. Next state: {self.current_state}. Next StateMaxValue: {self.q_table[self.current_state][state_max_value]}. Idx: {state_max_value}')
             except Exception as e:
                 self.logger.error(f'Error in learn: {e}')
 
@@ -192,6 +183,8 @@ class q_learning(object):
                 np.save(self.target_model_filename, self.q_table)
 
             self.logger.info('Episode of Agent ended.')
+        # Reset the score to 0
+        self.score = 0
 
 
 class Game(object):
@@ -202,9 +195,11 @@ class Game(object):
         self.size_x = 0
         self.size_y = 0
         self.world_score = 0
+        #self.reward = 0
         self.world_positions = {}
         self.end = False
         self.current_state = -1
+        self.current_reward = 0
 
 def start_agent(w, sock):
     """
@@ -293,7 +288,8 @@ def process_data(myworld, data, w):
         data = json.loads(data)
         myworld.size_x = int(data['size'].split('x')[0])
         myworld.size_y = int(data['size'].split('x')[1])
-        myworld.world_score = data['score']
+        myworld.current_reward = data['reward']
+        #myworld.world_score += myworld.current_reward
         myworld.world_positions = data['positions']
         myworld.current_state = data['current_character_position']
         myworld.end = data['end']
@@ -304,7 +300,8 @@ def process_data(myworld, data, w):
             for y in range(myworld.size_y):
                 w.addstr(y + minimum_y, x, emoji.emojize(str(myworld.world_positions[x + (y * 10)])))
         # Print score
-        w.addstr(minimum_y + myworld.size_y + 1, 0, f"Score: {str(myworld.world_score):>5}") 
+        #w.addstr(minimum_y + myworld.size_y + 1, 0, f"Score: {str(myworld.world_score):>5}") 
+        w.addstr(minimum_y + myworld.size_y + 1, 0, f"Reward: {str(myworld.current_reward):>5}") 
     except Exception as e:
         logging.error(f'Error in process_data: {e}')
 
