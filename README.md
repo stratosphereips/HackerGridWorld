@@ -32,15 +32,15 @@ Use they keys UP, DOWN, LEFT, RIGHT to play.
 
 - The world is a 2D grid of X times Y. Defined by the configuration of the server (` HGW.server.conf`)
 - The world has two ways to end:
-    - Score is 0
-    - You stepped into the output gate square
-- The score starts by some predefined value in the server's configuration. But I suggest to make it large so you give time to your agent to spend a lot of steps randomly learning.
-- The output gate (marked by default by an O in the world) increments your score and ends the game.
-- There can be objects in the world (such as a treasure with money marked by the X), that increment or decrement your score. You need to find out by yourself.
-- The goal is to finish the game with the maximum amount of score.
+    - Steps reach 0
+    - You stepped into an object that 'ends the game' (such as the output gate or lava)
+- The score starts by some predefined value in the server's configuration. Defaults to 0.
+- The output gate (marked by default by an O in the world) has positive reward and ends the game.
+- There can be objects in the world (such as a treasure with money marked by the X), that have positive or negative rewards. You need to find out by yourself.
+- The goal is to finish the game with the maximum amount of score. However, note that the world server only gives rewards. It is up to each agent to compute its own score based on the rewards.
 - There are 4 possible actions: up, down, left, right.
 - If you try to move outside the grid, you will stay in the last valid position of the grid. 
-- Every action taken has a penalty of -1 in the score. If you keep moving outside the grid with actions, even if your position does not change, you are penalized.
+- Every action taken has a penalty reward of -1. If you keep moving outside the grid with actions, even if your position does not change, you are penalized.
 
 # Define the world
 The whole world is defined in the configuration file of the server, such as:
@@ -53,8 +53,9 @@ The whole world is defined in the configuration file of the server, such as:
         },
 "host": "127.0.0.1",
 "port": 9000,
-"start_score": 500,
+"start_reward": 0,
 "speed": 0,
+"max_steps": 500,
 "objects": {
     "character": {
         "x": 5, 
@@ -64,29 +65,29 @@ The whole world is defined in the configuration file of the server, such as:
     "output_gate": {
         "x": 9, 
         "y": 9,
-        "score": 100,
+        "reward": 100,
         "icon": "O",
         "taken": false,
         "ends_game": true,
         "consumable": false
     },
     "goal1": {
-        "x": 9, 
-        "y": 0,
-        "score": 500,
-        "icon": "X",
+        "x": 6, 
+        "y": 7,
+        "reward": 1000,
+        "icon": "1",
         "taken": false,
         "ends_game": false,
         "consumable": true
     },
-    "goal2": {
-        "x": 3, 
-        "y": 3,
-        "score": 700,
-        "icon": "X",
+    "lava1": {
+        "x": 6, 
+        "y": 8,
+        "reward": -700,
+        "icon": "L",
         "taken": false,
-        "ends_game": false,
-        "consumable": true
+        "ends_game": true,
+        "consumable": false
     }
 }
 }
@@ -121,13 +122,11 @@ The server gives a new _fresh_ world as a JSON to any client connecting. The JSO
 "max_x": 9, 
 "max_y": 9, 
 "size": "10x10", 
-"score": 692, 
-"positions": [" ", " ", " ", " ", " ", " ", " ", " ", " ", "X", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "
-", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "
-", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "
-", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "O"], 
-"current_character_position": 99, 
-"end": true}
+"reward": -700, 
+"positions": ["L", " ", " ", " ", " ", " ", " ", "1", " ", " ", "L", " ", "6", " ", " ", " ", " ", " ", " ", " ", "L", "L", "L", "L", "L", " ", " ", "L", " ", " ", "L", " ", " ", " ", " ", " ", " ", " ", " ", " ", "L", " ", "L", "L", "L", " ", " ", " ", " ", " ", "L", " ", " ", " ", "L", " ", " ", " ", " ", " ", "L", "L", "L", " ", "L", " ", "L", " ", " ", " ", "L", "L", "L", " ", "L", " ", "1", " ", " ", " ", " ", " ", " ", " ", "L", " ", " ", " ", " ", " ", " ", "L", "L", "L", "L", " ", " ", " ", " ", "O"], "
+end": true, 
+"current_character_position": 70
+}
 ```
     
 The size is sent in several forms, but that will probably change to one later. You also have the min and max positions in both axes so you know the shape of the world, but that will probably change too.
