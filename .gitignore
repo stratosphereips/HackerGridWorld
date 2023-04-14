@@ -5,3 +5,7 @@
 models
 .DS_Store
 *.pyc
+behavioral-model.txt
+behavioral-model.npy
+target-model.txt
+target-model.npy
