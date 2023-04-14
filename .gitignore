@@ -1,2 +1,7 @@
 *.swp
 *.log
+*.mov
+*.png
+models
+.DS_Store
+*.pyc
