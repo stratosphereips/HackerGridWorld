@@ -104,7 +104,7 @@ class Game_HGW(object):
         Returns a game object
 
         The game has a world, with characters and positions
-        it also has rules, scores actions and dynamics of movements
+        it also has rules, rewards actions and dynamics of movements
         """
         # Read the conf
         with open(args.configfile, 'r') as jfile:
@@ -121,15 +121,15 @@ class Game_HGW(object):
         self.world["max_x"] = self.world["size_x"] - 1
         self.world["max_y"] = self.world["size_y"] - 1
         self.world["size"] = str(self.world["size_x"]) + 'x'+ str(self.world["size_y"])
-        self.world["score"] = confjson['world'].get("score", 500)
-        self.prev_score = self.world["score"]
+        self.world["reward"] = confjson['world'].get("reward", 0)
         # Positions are stored as continous list, from 0 to 99 (for 100 positions example)
         self.world["positions"] = []
-        # Move penalty
-        self.move_penalty = 1
         # Track the end
         self.world['end'] = False
-
+        # Move penalty
+        self.move_penalty = -1
+        # Max steps
+        self.steps = confjson['max_steps']
 
         # Iconography
         self.background = ' '
@@ -164,41 +164,6 @@ class Game_HGW(object):
 
         logging.info(f"Objects: {self.objects}")
 
-        """
-        self.character = {}
-        self.character['icon'] = "W"
-        self.character['x'] = confjson['objects']['character']["start_position_x"]
-        self.character['y'] = confjson['objects']['character']["start_position_y"]
-        # Set the state of the character in the world
-        self.world['current_character_position'] = self.character['x'] + (self.character['y'] * self.world['size_x'])
-
-        # Goal of world
-        self.goal = {}
-        self.goal['icon'] = "X"
-        self.goal['x'] = 9
-        self.goal['y'] = 0
-        self.goal['score'] = 500
-        self.goal['taken'] = False
-
-        # Output gate of world
-        self.output_gate = {}
-        self.output_gate['icon'] = "O"
-        self.output_gate['x'] = 9
-        self.output_gate['y'] = 9
-        self.output_gate['score'] = 500
-        self.output_gate['taken'] = False
-        """
-
-
-
-        """
-        # Goal
-        self.world['positions'][self.goal['x'] + (self.goal['y'] * self.world['size_x'])] = self.goal['icon']
-
-        # Character
-        self.world['positions'][self.character['x'] + (self.character['y'] * self.world['size_x'])] = self.character['icon']
-        """
-
         # Add the fixed objects
         # self.put_fixed_items()
 
@@ -207,7 +172,6 @@ class Game_HGW(object):
         Add the fixed items
         """
         # output gate
-        #self.world['positions'][self.objects['output_gate']['x'] + (self.objects['output_gate']['y'] * self.world['size_x'])] = self.objects['output_gate']['icon']
         for object in self.objects:
             # positions
             if not 'character' in object:
@@ -248,38 +212,31 @@ class Game_HGW(object):
             if not 'character' in object:
                 if self.objects[object]['consumable'] == False or (self.objects[object]['consumable'] == True and self.objects[object]['taken'] == False):
                     if self.objects[object]['x'] == self.objects['character']['x'] and self.objects[object]['y'] == self.objects['character']['y']:
-                        self.world['score'] += self.objects[object]['score']
+                        self.world['reward'] = self.objects[object]['reward']
                         self.objects[object]['taken'] = True
 
-
-        """
-        # Check objects
-        if self.objects['character']['x'] == self.objects['goal']['x'] and self.objects['character']['y'] == self.objects['goal']['y'] and not self.objects['goal']['taken']:
-            if not self.objects['goal']['taken']:
-                self.world['score'] += self.objects['goal']['score']
-                self.objects['goal']['taken'] = True
-
-        # Check output_gate
-        if self.objects['character']['x'] == self.objects['output_gate']['x'] and self.objects['character']['y'] == self.objects['output_gate']['y'] and not self.objects['output_gate']['taken']:
-            if not self.objects['output_gate']['taken']:
-                self.world['score'] += self.objects['output_gate']['score']
-                self.objects['output_gate']['taken'] = True
-        """
 
     def check_end(self):
         """
         Check the end
 
         Two OR conditions
-        - If the score is 0 then the game ends
+        - If steps is 0 then the game ends
         - If the output gate was crossed, the game ends
         """
-        if self.world['score'] <= 0:
+        if self.steps <= 0:
             self.world['end'] = True
             return True
-        if self.objects['output_gate']['taken'] == True:
-            self.world['end'] = True
-            return True
+        for obj in self.objects:
+            try:
+                if self.objects[obj]['ends_game'] == True:
+                    if self.objects[obj]['taken'] == True:
+                        logging.info(obj)
+                        self.world['end'] = True
+                        return True
+            except KeyError:
+                # Some objects dont have the key 'ends_game'
+                pass
         return False
 
     def process_input_key(self, key):
@@ -300,8 +257,10 @@ class Game_HGW(object):
             self.objects['character']['x'] -= 1
         logging.info(f"The char was moved to {self.objects['character']['x']} {self.objects['character']['y']} ")
 
-        # Compute the character move penalty
-        self.world['score'] -= self.move_penalty
+        # Compute the character move penalty in reward
+        self.world['reward'] = self.move_penalty
+        # Decrease one step
+        self.steps -= 1
 
         # Check that the boundaries of the game were not violated
         self.check_boundaries()
@@ -319,9 +278,7 @@ class Game_HGW(object):
         # Put fixed objects back
         self.put_fixed_items()
 
-        self.prev_score = self.world['score']
-
-        logging.info(f"Score after key: {self.world['score']}")
+        logging.info(f"Score after key: {self.world['reward']}")
 
         # Cooldown period
         # Each key inputted is forced to wait a little
