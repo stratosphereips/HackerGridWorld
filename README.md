@@ -101,6 +101,7 @@ In here you can add objects with:
 - ends_game: if finding this object ends the game
 - taken: if the object was already taken or not
 - icon: The ASCII icon to assign to it
+- solid: If the character can get in that position or it can not, like a wall.
 
 # Why remote server as a game environment
 The idea of having a world in as TCP server is to have this features:
