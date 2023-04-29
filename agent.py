@@ -180,10 +180,10 @@ class q_learning(object):
             if self.score > self.best_score:
                 self.logger.critical(f'Saving model of behavioral policy due to best score ever. After {self.episodes} episodes, score: {self.score}. Files "{self.behavioral_model_filename}*"')
                 # Save txt
-                with open(self.behavioral_model_filename + '.txt', 'w+') as fi:
+                with open(self.behavioral_model_filename + '_' + str(self.score) + '.txt', 'w+') as fi:
                     fi.write(str(self.q_table))
                 # Save npy
-                np.save(self.behavioral_model_filename, self.q_table)
+                np.save(self.behavioral_model_filename + '_' + str(self.score) , self.q_table)
                 self.best_score = self.score
 
             if self.episodes % self.n_episodes_evaluate == 0:
@@ -241,6 +241,9 @@ def start_agent(w, sock):
             if check_end(myworld):
                 # The game ended
                 agent_model.game_ended()
+                # If in test mode, stop here
+                if args.replayfile:
+                    return True
                 # Get the new map to reset
                 net_data = sock.recv(2048)
                 logger.info(f'Received: {net_data.decode()!r}')
