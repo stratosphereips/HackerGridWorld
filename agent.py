@@ -69,7 +69,10 @@ class q_learning(object):
         """
         Init the q table values
         """
+        # The q_table is a two dimensional vector of X positions of states, and each state has a vector of 4 actions
+        # The X positions are in a continous vector
         self.q_table = np.zeros((self.world['size_x'] * self.world['size_y'], len(self.actions)))
+        # Initialize with random?
         #self.q_table = np.random.rand(self.world['size_x'] * self.world['size_y'], len(self.actions))
 
     def update_world(self, theworld):
@@ -104,23 +107,24 @@ class q_learning(object):
         """
         try:
             #self.logger.info('Choose action.')
-
-            #actions_state = self.q_table[self.current_state]
             die = random.random()
             decay_rate = np.max( [(self.max_episodes_epsilon - self.episodes) / self.max_episodes_epsilon, 0])
             self.epsilon = (self.epsilon_start - self.epsilon_end ) * decay_rate + self.epsilon_end
             if die <= self.epsilon:
                 # Random action e-greedy
-                #self.logger.error('Choosing random greedy.')
+                self.logger.info('Choosing random action.')
                 action = random.randint(0, len(self.actions) - 1)
             else:
-                #self.logger.error('Choosing max.')
                 # Choose the action that maximizes the value of this state
                 values_actions = self.q_table[self.current_state]
-                action = np.argmax(values_actions)
+                max_value = np.max(values_actions)
+                # See if the max value appeared many times, and if yes break ties by choosing randomly between those indexes
+                temp_values_actions = np.array(values_actions)
+                indexes = np.where(temp_values_actions == max_value)[0]
+                action = random.choice(indexes)
+                self.logger.info(f'Choosing policy action. Action: {self.actions[action]}. Value: {max_value} from {values_actions}')
             
             # Store last action
-            self.logger.info(f'Updating last action {self.last_action} with {action}')
             self.last_action = action
             
             action_name = self.actions[action]
@@ -139,17 +143,26 @@ class q_learning(object):
         # If we are replaying, don't learn
         if not args.replayfile:
             try:
-                # Get the value of Q(s', a')
-                state_max_value = np.argmax(self.q_table[self.current_state])
+                # To get the value of Q(s', a')
+                # Select the action that maximices the current policy
+                values_actions = self.q_table[self.current_state]
+                max_value = np.max(values_actions)
+                # See if the max value appeared many times, and if yes break ties by choosing randomly between those indexes
+                temp_values_actions = np.array(values_actions)
+                indexes = np.where(temp_values_actions == max_value)[0]
+                state_action_idx_max_value = random.choice(indexes)
+
                 # Update Q(s, a)
+                self.logger.info(f'Prev state: {self.prev_state}. Step Reward: {self.reward}. Next state: {self.current_state}. Next StateMaxValue: {self.q_table[self.current_state][state_action_idx_max_value]}. Idx: {state_action_idx_max_value}')
+                self.logger.info(f'\tBefore update. Action Values: {self.q_table[self.prev_state]}.')
                 self.q_table[self.prev_state][self.last_action] = self.q_table[self.prev_state][self.last_action] + (
                                                 self.learning_rate * (
                                                     self.reward + 
-                                                    (self.gamma * self.q_table[self.current_state][state_max_value]) - 
+                                                    (self.gamma * self.q_table[self.current_state][state_action_idx_max_value]) - 
                                                     self.q_table[self.prev_state][self.last_action] 
                                                     ) 
                                                 )
-                self.logger.info(f'Prev state: {self.prev_state}, Prev Action Values: {self.q_table[self.prev_state]}. Step Reward: {self.reward}. Next state: {self.current_state}. Next StateMaxValue: {self.q_table[self.current_state][state_max_value]}. Idx: {state_max_value}')
+                self.logger.info(f'\tAfter  update. Action Values: {self.q_table[self.prev_state]}.')
             except Exception as e:
                 self.logger.error(f'Error in learn: {e}')
 
@@ -235,7 +248,7 @@ def start_agent(w, sock):
                 # The world is resseted by the server, here we just load it
                 process_data(myworld, net_data, w)
 
-            # Get key from agent
+            # Get key from agent, the action
             key = agent_model.act(myworld)
 
             # Print the action
@@ -277,6 +290,7 @@ def check_end(myworld):
     if myworld.end:
         # Game end
         logging.info(f'Game ended: Score: {myworld.world_score}')
+        myworld.world_score = 0
         return True
 
 def process_data(myworld, data, w):
@@ -289,19 +303,21 @@ def process_data(myworld, data, w):
         myworld.size_x = int(data['size'].split('x')[0])
         myworld.size_y = int(data['size'].split('x')[1])
         myworld.current_reward = data['reward']
-        #myworld.world_score += myworld.current_reward
+        myworld.world_score += myworld.current_reward
         myworld.world_positions = data['positions']
         myworld.current_state = data['current_character_position']
         myworld.end = data['end']
-      
         # Print positions
         minimum_y = 10
+        # In the console graph Y grows going down and X grows to the right
         for x in range(myworld.size_x):
             for y in range(myworld.size_y):
                 w.addstr(y + minimum_y, x, emoji.emojize(str(myworld.world_positions[x + (y * 10)])))
         # Print score
-        #w.addstr(minimum_y + myworld.size_y + 1, 0, f"Score: {str(myworld.world_score):>5}") 
         w.addstr(minimum_y + myworld.size_y + 1, 0, f"Reward: {str(myworld.current_reward):>5}") 
+        w.addstr(minimum_y + myworld.size_y + 2, 0, f"Score: {str(myworld.world_score):>5}") 
+
+      
     except Exception as e:
         logging.error(f'Error in process_data: {e}')
 
@@ -310,7 +326,7 @@ def print_action(action, myworld, w):
     Print the action from the agent
     """
     minimum_y = 10
-    w.addstr(myworld.size_y + minimum_y + 2, 0, f'{action:<15}')
+    w.addstr(myworld.size_y + minimum_y + 3, 0, f'{action:<15}')
     w.refresh()
 
 
@@ -357,7 +373,7 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--replayfile', help='Used this saved model strategy to play in human time.', action='store', required=False, type=str)
 
     args = parser.parse_args()
-    logging.basicConfig(filename='agent.log', filemode='a', format='%(asctime)s %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S',level=logging.CRITICAL)
+    logging.basicConfig(filename='agent.log', filemode='a', format='%(asctime)s %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S',level=logging.INFO)
 
     with open(args.configfile, 'r') as jfile:
         confjson = json.load(jfile)
