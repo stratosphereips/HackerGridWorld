@@ -110,18 +110,25 @@ class q_learning(object):
             die = random.random()
             decay_rate = np.max( [(self.max_episodes_epsilon - self.episodes) / self.max_episodes_epsilon, 0])
             self.epsilon = (self.epsilon_start - self.epsilon_end ) * decay_rate + self.epsilon_end
-            if die <= self.epsilon:
-                # Random action e-greedy
-                self.logger.info('Choosing random action.')
-                action = random.randint(0, len(self.actions) - 1)
+            if not args.replayfile:
+                if die <= self.epsilon:
+                    # Random action e-greedy
+                    self.logger.info('Choosing random action.')
+                    action = random.randint(0, len(self.actions) - 1)
+                else:
+                    # Choose the action that maximizes the value of this state
+                    values_actions = self.q_table[self.current_state]
+                    max_value = np.max(values_actions)
+                    # See if the max value appeared many times, and if yes break ties by choosing randomly between those indexes
+                    temp_values_actions = np.array(values_actions)
+                    indexes = np.where(temp_values_actions == max_value)[0]
+                    action = random.choice(indexes)
+                    self.logger.info(f'Choosing policy action. Action: {self.actions[action]}. Value: {max_value} from {values_actions}')
             else:
-                # Choose the action that maximizes the value of this state
+                # We are in testing mode. Do not randomize the selection of actions. No egreedy
                 values_actions = self.q_table[self.current_state]
                 max_value = np.max(values_actions)
-                # See if the max value appeared many times, and if yes break ties by choosing randomly between those indexes
-                temp_values_actions = np.array(values_actions)
-                indexes = np.where(temp_values_actions == max_value)[0]
-                action = random.choice(indexes)
+                action = np.argmax(values_actions)
                 self.logger.info(f'Choosing policy action. Action: {self.actions[action]}. Value: {max_value} from {values_actions}')
             
             # Store last action
@@ -172,13 +179,13 @@ class q_learning(object):
         """
         # Score we got in the last game
         self.last_episode_scores.append(self.score)
-        #self.logger.error(f'Episode score: {self.score}')
+        self.logger.error(f'Episode score: {self.score}')
         self.episodes += 1
 
         if not args.replayfile:
             # Store best model
             if self.score > self.best_score:
-                self.logger.critical(f'Saving model of behavioral policy due to best score ever. After {self.episodes} episodes, score: {self.score}. Files "{self.behavioral_model_filename}*"')
+                self.logger.critical(f'Saving model of behavioral policy due to best score ever. After {self.episodes} episodes, score was {self.best_score}, and now is {self.score}. Files "{self.behavioral_model_filename}_{str(self.score)}*"')
                 # Save txt
                 with open(self.behavioral_model_filename + '_' + str(self.score) + '.txt', 'w+') as fi:
                     fi.write(str(self.q_table))
