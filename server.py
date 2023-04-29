@@ -156,6 +156,7 @@ class Game_HGW(object):
         # Init objects that do need to appear in the world for the client
         for object in self.objects:
             # positions
+            # The objects are loaded as pos = X + (Y * X_size)
             self.world['positions'][
                     self.objects[object]['x']
                     + (self.objects[object]['y']
@@ -176,6 +177,7 @@ class Game_HGW(object):
             # positions
             if not 'character' in object:
                 if self.objects[object]['consumable'] == False or (self.objects[object]['consumable'] == True and self.objects[object]['taken'] == False):
+                    # The objects are loaded as pos = X + (Y * X_size)
                     self.world['positions'][
                             self.objects[object]['x']
                             + (self.objects[object]['y']
@@ -224,37 +226,71 @@ class Game_HGW(object):
         - If steps is 0 then the game ends
         - If the output gate was crossed, the game ends
         """
+        logging.info('Checking end')
         if self.steps <= 0:
             self.world['end'] = True
+            logging.info('World end by timoutout')
             return True
         for obj in self.objects:
             try:
                 if self.objects[obj]['ends_game'] == True:
                     if self.objects[obj]['taken'] == True:
-                        logging.info(obj)
+                        logging.info(f'World end by gate: {obj}')
                         self.world['end'] = True
                         return True
             except KeyError:
                 # Some objects dont have the key 'ends_game'
                 pass
         return False
+    
+    def check_walls(self, x, y):
+        """
+        Check if the object in the position character+x, character+y is solid or not
+        """
+        proposed_x = self.objects['character']['x'] + x
+        proposed_y = self.objects['character']['y'] + y
+        for object in self.objects:
+            if not 'character' in object:
+                if self.objects[object]['x'] == proposed_x and self.objects[object]['y'] == proposed_y and self.objects[object]['solid'] == True:
+                    return True
+        return False
 
     def process_input_key(self, key):
         """
         process input key
         """
+        # The world positions is a 100-values vector (in 100 states)
+        # X (horizontal in the grid) goes from 0 to 9 to the right, Y (vertical in the grid) goes from 0 to 9 down
+        # The top-left corner is X=0, Y=0
+        # The lower-right corner is X=9, Y=9
+        # The position vector starts with all the X positions for Y=0, then all the X positions for Y=1, etc.
+        # [Y0X0, Y0X1, ..., Y0X9, Y1X0, Y1X1, ..., Y9X9]
+
+        # To transform from a X, Y system to the large position vector that goes from 0 to 99 we do
+        # position = X + (Y * 10)
+        # examples
+        #  X=0, Y=0 -> pos=0
+        #  X=9, Y=0 -> pos=9
+        #  X=8, Y=0 -> pos=8
+        #  X=3, Y=1 -> pos=13
+        #  X=0, Y=9 -> pos=90
 
         # Find the new positions of the character
         # Delete the current character
         self.world['positions'][self.objects['character']['x'] + (self.objects['character']['y'] * self.world['size_x'])] = self.background
         if "UP" in key:
-            self.objects['character']['y'] -= 1
+            # Check that the boundaries of the game were not violated
+            if not self.check_walls(0, -1):
+                self.objects['character']['y'] -= 1
         elif "DOWN" in key:
-            self.objects['character']['y'] += 1
+            if not self.check_walls(0, 1):
+                self.objects['character']['y'] += 1
         elif "RIGHT" in key:
-            self.objects['character']['x'] += 1
+            if not self.check_walls(1, 0):
+                self.objects['character']['x'] += 1
         elif "LEFT" in key:
-            self.objects['character']['x'] -= 1
+            if not self.check_walls(-1, 0):
+                self.objects['character']['x'] -= 1
         logging.info(f"The char was moved to {self.objects['character']['x']} {self.objects['character']['y']} ")
 
         # Compute the character move penalty in reward
@@ -265,7 +301,7 @@ class Game_HGW(object):
         # Check that the boundaries of the game were not violated
         self.check_boundaries()
 
-        # Check if there were any collitions
+        # Check if there were any collisions
         self.check_collisions()
 
         # Check if the game ended
@@ -299,7 +335,7 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--test', help='Run serve in test mode. Speed is 0.1 and port is the port in the conf + 1', action='store_true', required=False)
 
     args = parser.parse_args()
-    logging.basicConfig(filename='server.log', filemode='a', format='%(asctime)s, %(name)s: %(message)s', datefmt='%H:%M:%S', level=logging.ERROR)
+    logging.basicConfig(filename='server.log', filemode='a', format='%(asctime)s, %(name)s: %(message)s', datefmt='%H:%M:%S', level=logging.CRITICAL)
 
     with open(args.configfile, 'r') as jfile:
         confjson = json.load(jfile)
