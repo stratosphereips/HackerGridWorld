@@ -296,12 +296,16 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbose', help='Verbosity level. This shows more info about the results.', action='store', required=False, type=int)
     parser.add_argument('-d', '--debug', help='Debugging level. This shows inner information about the flows.', action='store', required=False, type=int)
     parser.add_argument('-c', '--configfile', help='Configuration file.', action='store', required=True, type=str)
+    parser.add_argument('-t', '--test', help='Run serve in test mode. Speed is 0.1 and port is the port in the conf + 1', action='store_true', required=False)
 
     args = parser.parse_args()
     logging.basicConfig(filename='server.log', filemode='a', format='%(asctime)s, %(name)s: %(message)s', datefmt='%H:%M:%S', level=logging.ERROR)
 
     with open(args.configfile, 'r') as jfile:
         confjson = json.load(jfile)
+        if args.test:
+            confjson['speed'] = 0.1
+            confjson['port'] = confjson['port'] + 1
 
     try:
         logging.debug('Server start')
