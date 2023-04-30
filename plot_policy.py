@@ -46,9 +46,11 @@ if __name__ == '__main__':
     row = []
     for i in range(len(q_table)):
     # From the end to the start
-        action_val_choosen = np.argmax([q_table[i][0], q_table[i][1], q_table[i][2], q_table[i][3]])
+        q_values = [q_table[i][0], q_table[i][1], q_table[i][2], q_table[i][3]]
+        action_val_choosen = np.argmax(q_values)
         action_choosen = actions[action_val_choosen]
-        #print(f'Line {i}: Action: {action_choosen}')
+        if args.verbose:
+            print(f'Line {i}: Action: {action_choosen}. Qvalues: {q_values}')
         object_icon = '⬛️'
         for obj in obj_icons:
             #print(obj, i)
