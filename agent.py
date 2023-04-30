@@ -25,7 +25,6 @@ class q_learning(object):
 
     """
     def __init__(self, theworld):
-        self.q_table = []
         self.actions = ['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT']
         self.last_action = -1
         self.learning_rate = confjson.get('learning_rate', 0.1)
@@ -58,6 +57,10 @@ class q_learning(object):
         self.target_model_filename = 'target-model'
         self.eval_model_filename = 'evaluated-model'
 
+        # Q-table levels
+        # GF stands of Ground Floor. Is the main q_table used when the game starts and it is independent of the 'state' to start
+        self.current_qtable_level = 'GF'
+
         # If repaly mode, load the model
         if args.replayfile:
             # Load
@@ -74,11 +77,14 @@ class q_learning(object):
         """
         Init the q table values
         """
-        # The q_table is a two dimensional vector of X positions of states, and each state has a vector of 4 actions
-        # The X positions are in a continous vector
-        self.q_table = np.zeros((self.world['size_x'] * self.world['size_y'], len(self.actions)))
-        # Initialize with random?
-        #self.q_table = np.random.rand(self.world['size_x'] * self.world['size_y'], len(self.actions))
+        # The q_table is a dictionary indexed by the 'state' that was used to 'enter' the table, called here the 'level'.
+        # On each position it has a two dimensional vector of X positions of 'states', and each 'state' has a vector of 4 actions
+        # The X positions are in a continous list
+        # Example
+        #  self.q_table = {'GF': [ [0.1, 0.2, 0.3, 0.4] , ... , [0.1, 0.2, 0.3, 0.4] ], '90': [ [0.1, 0.2, 0.3, 0.4] , ... , [0.1, 0.2, 0.3, 0.4] ]}
+        #self.q_table = np.zeros((self.world['size_x'] * self.world['size_y'], len(self.actions)))
+        self.q_table = {}
+        self.q_table[self.current_qtable_level] = np.zeros((self.world['size_x'] * self.world['size_y'], len(self.actions)))
 
     def update_world(self, theworld):
         """
@@ -120,7 +126,7 @@ class q_learning(object):
                     action = random.randint(0, len(self.actions) - 1)
                 else:
                     # Choose the action that maximizes the value of this state
-                    values_actions = self.q_table[self.current_state]
+                    values_actions = self.q_table[self.current_qtable_level][self.current_state]
                     max_value = np.max(values_actions)
                     # See if the max value appeared many times, and if yes break ties by choosing randomly between those indexes
                     temp_values_actions = np.array(values_actions)
@@ -129,7 +135,7 @@ class q_learning(object):
                     self.logger.info(f'Choosing policy action. Action: {self.actions[action]}. Value: {max_value} from {values_actions}')
             else:
                 # We are in eval mode or replaying a policy. Do not randomize the selection of actions. No egreedy
-                values_actions = self.q_table[self.current_state]
+                values_actions = self.q_table[self.current_qtable_level][self.current_state]
                 max_value = np.max(values_actions)
                 action = np.argmax(values_actions)
                 self.logger.info(f'Eval mode: Choosing policy action. Action: {self.actions[action]}. Value: {max_value} from {values_actions}')
@@ -155,7 +161,7 @@ class q_learning(object):
             try:
                 # To get the value of Q(s', a')
                 # Select the action that maximices the current policy
-                values_actions = self.q_table[self.current_state]
+                values_actions = self.q_table[self.current_qtable_level][self.current_state]
                 max_value = np.max(values_actions)
                 # See if the max value appeared many times, and if yes break ties by choosing randomly between those indexes
                 temp_values_actions = np.array(values_actions)
@@ -163,16 +169,16 @@ class q_learning(object):
                 state_action_idx_max_value = random.choice(indexes)
 
                 # Update Q(s, a)
-                self.logger.info(f'Prev state: {self.prev_state}. Step Reward: {self.reward}. Next state: {self.current_state}. Next StateMaxValue: {self.q_table[self.current_state][state_action_idx_max_value]}. Idx: {state_action_idx_max_value}')
-                self.logger.info(f'\tBefore update. Action Values: {self.q_table[self.prev_state]}.')
-                self.q_table[self.prev_state][self.last_action] = self.q_table[self.prev_state][self.last_action] + (
+                self.logger.info(f'Prev state: {self.prev_state}. Step Reward: {self.reward}. Next state: {self.current_state}. Next StateMaxValue: {self.q_table[self.current_qtable_level][self.current_state][state_action_idx_max_value]}. Idx: {state_action_idx_max_value}')
+                self.logger.info(f'\tBefore update. Action Values: {self.q_table[self.current_qtable_level][self.prev_state]}.')
+                self.q_table[self.current_qtable_level][self.prev_state][self.last_action] = self.q_table[self.current_qtable_level][self.prev_state][self.last_action] + (
                                                 self.learning_rate * (
                                                     self.reward + 
-                                                    (self.gamma * self.q_table[self.current_state][state_action_idx_max_value]) - 
-                                                    self.q_table[self.prev_state][self.last_action] 
+                                                    (self.gamma * self.q_table[self.current_qtable_level][self.current_state][state_action_idx_max_value]) - 
+                                                    self.q_table[self.current_qtable_level][self.prev_state][self.last_action] 
                                                     ) 
                                                 )
-                self.logger.info(f'\tAfter  update. Action Values: {self.q_table[self.prev_state]}.')
+                self.logger.info(f'\tAfter  update. Action Values: {self.q_table[self.current_qtable_level][self.prev_state]}.')
             except Exception as e:
                 self.logger.error(f'Error in learn: {e}')
 
@@ -186,16 +192,6 @@ class q_learning(object):
             self.last_episode_scores.append(self.score)
             self.logger.info(f'Episode ended. Score: {self.score}')
             self.episodes += 1
-
-            # Store best model
-            #if self.score > self.best_score:
-                #self.logger.critical(f'Saving model of behavioral policy due to best score ever. After {self.episodes} episodes, score was {self.best_score}, and now is {self.score}. Files "{self.behavioral_model_filename}_{str(self.score)}*"')
-                # Save txt
-                #with open(self.behavioral_model_filename + '_' + str(self.score) + '.txt', 'w+') as fi:
-                    #fi.write(str(self.q_table))
-                # Save npy
-                #np.save(self.behavioral_model_filename + '_' + str(self.score) , self.q_table)
-                #self.best_score = self.score
 
             if self.episodes % self.eval_every_n_episodes == 0:
                 avg_scores = np.average(self.last_episode_scores)
