@@ -7,3 +7,4 @@ models
 *.pyc
 *.txt
 *.npy
+*.json
