@@ -15,7 +15,7 @@ import random
 import pickle
 
 
-__version__ = 'v0.2'
+__version__ = 'v0.4'
 
 class q_learning(object):
     """
@@ -35,7 +35,8 @@ class q_learning(object):
         self.max_episodes_epsilon = confjson.get('epsilon_max_episodes', 3000)
         self.epsilon = self.epsilon_start
         self.gamma = confjson.get('gamma', 0.9)
-        self.n_episodes_evaluate = confjson.get('n_episodes_evaluate', 100)
+        self.n_episodes_evaluate = confjson.get('n_episodes_evaluate', 1)
+        self.eval_every_n_episodes = confjson.get('eval_every_n_episodes', 100)
         self.world = {}
         self.world['size_x'] = theworld.size_x
         self.world['size_y'] = theworld.size_y
@@ -44,8 +45,9 @@ class q_learning(object):
         self.score = 0
         self.best_score = float('-inf')
         self.last_episode_scores = []
+        self.last_eval_episode_scores = []
         self.reward = theworld.current_reward
-        self.logger = logging.getLogger('AGENT')
+        self.logger = logging.getLogger('qlearn')
         self.episodes = 0
         self.end = theworld.end
 
@@ -228,8 +230,8 @@ def start_agent(w, sock):
     """
     try:
 
-        logger = logging.getLogger('AGENT')
-        logger.info('Starting agent')
+        logger = logging.getLogger('agent ')
+        logger.info('starting agent')
 
         myworld = Game()
 
@@ -299,7 +301,9 @@ def check_end(myworld):
     """
     if myworld.end:
         # Game end
-        logging.info(f'Game ended: Score: {myworld.world_score}')
+        logger = logging.getLogger('agent')
+        #logging.info(f'Game ended: Score: {myworld.world_score}')
+        logging.info('Game ended.')
         myworld.world_score = 0
         return True
 
@@ -383,7 +387,7 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--replayfile', help='Used this saved model strategy to play in human time.', action='store', required=False, type=str)
 
     args = parser.parse_args()
-    logging.basicConfig(filename='agent.log', filemode='a', format='%(asctime)s %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S',level=logging.INFO)
+    logging.basicConfig(filename='agent.log', filemode='a', format='%(asctime)s %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S',level=logging.CRITICAL)
 
     with open(args.configfile, 'r') as jfile:
         confjson = json.load(jfile)
