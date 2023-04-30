@@ -199,12 +199,14 @@ class q_learning(object):
 
             if self.episodes % self.eval_every_n_episodes == 0:
                 avg_scores = np.average(self.last_episode_scores)
-                self.logger.critical(f'Summary of episodes elapsed: {self.episodes}. Avg Scores in last 100 episodes: {avg_scores:.4f}. Epsilon: {self.epsilon:.5f}. Saving.')
+                self.logger.critical(f'Summary of episodes elapsed: {self.episodes}. Avg Scores in last {self.eval_every_n_episodes} episodes: {avg_scores:.4f}. Epsilon: {self.epsilon:.5f}. Saving.')
                 # Save txt
                 with open(self.target_model_filename + '.txt', 'w+') as fi:
                     fi.write(str(self.q_table))
                 # Save npy
                 np.save(self.target_model_filename, self.q_table)
+                # Delete the previous scores so the avg is of the last X
+                self.last_episode_scores = []
 
                 # Eval the current policy as test, without random for X episodes
                 self.eval_mode = True
@@ -231,6 +233,7 @@ class q_learning(object):
                 # Finished the evalution after some episodes
                 self.eval_mode = False
                 self.eval_episodes = 0
+                self.last_eval_episode_scores = []
                 self.logger.error(f'Ending Evaluation.')
             else:
                 self.eval_episodes += 1
