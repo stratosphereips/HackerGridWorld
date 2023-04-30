@@ -42,23 +42,26 @@ if __name__ == '__main__':
                 obj_icons[goal_pos] = goal_icon
 
     actions={0:'⬆️', 1:'⬇️', 2:'⬅️', 3:'➡️'}
-    q_table = np.load(args.policyfile)
+    q_table = np.load(args.policyfile, allow_pickle=True)
+    q_table = q_table.item()
     row = []
-    for i in range(len(q_table)):
-    # From the end to the start
-        q_values = [q_table[i][0], q_table[i][1], q_table[i][2], q_table[i][3]]
-        action_val_choosen = np.argmax(q_values)
-        action_choosen = actions[action_val_choosen]
-        if args.verbose:
-            print(f'Line {i}: Action: {action_choosen}. Qvalues: {q_values}')
-        object_icon = '⬛️'
-        for obj in obj_icons:
-            #print(obj, i)
-            if i == int(obj):
-                #print(f'Adding obj {obj}{obj_icons[obj]} to position {i}')
-                object_icon = obj_icons[obj]
-        #print(f'Position {i}. Adding action {action_choosen} and icon {object_icon}')
-        row.append(action_choosen + ' ' + object_icon)
-        if len(row)%10 == 0:
-            print(row)
-            row = []
+    
+    for level in q_table:
+        for i in range(len(q_table[level])):
+        # From the end to the start
+            q_values = [q_table[level][i][0], q_table[level][i][1], q_table[level][i][2], q_table[level][i][3]]
+            action_val_choosen = np.argmax(q_values)
+            action_choosen = actions[action_val_choosen]
+            if args.verbose:
+                print(f'Line {i}: Action: {action_choosen}. Qvalues: {q_values}')
+            object_icon = '⬛️'
+            for obj in obj_icons:
+                #print(obj, i)
+                if i == int(obj):
+                    #print(f'Adding obj {obj}{obj_icons[obj]} to position {i}')
+                    object_icon = obj_icons[obj]
+            #print(f'Position {i}. Adding action {action_choosen} and icon {object_icon}')
+            row.append(action_choosen + ' ' + object_icon)
+            if len(row)%10 == 0:
+                print(row)
+                row = []
