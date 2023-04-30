@@ -26,7 +26,6 @@ class q_learning(object):
     """
     def __init__(self, theworld):
         self.q_table = []
-        #self.actions = {'0':'KEY_UP', '1':'KEY_DOWN', '2':'KEY_LEFT', '3':'KEY_RIGHT'}
         self.actions = ['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT']
         self.last_action = -1
         self.learning_rate = confjson.get('learning_rate', 0.1)
@@ -49,11 +48,15 @@ class q_learning(object):
         self.reward = theworld.current_reward
         self.logger = logging.getLogger('qlearn')
         self.episodes = 0
+        self.eval_episodes = 0
         self.end = theworld.end
+        # By default we are not only evaluating a policy
+        self.eval_mode = False
 
         # Where to save the models
         self.behavioral_model_filename = 'behavioral-model'
         self.target_model_filename = 'target-model'
+        self.eval_model_filename = 'evaluated-model'
 
         # If repaly mode, load the model
         if args.replayfile:
@@ -81,12 +84,9 @@ class q_learning(object):
         """
         Update world
         """
-        #self.logger.info(f'In update. Current_state: {self.current_state}')
-        #self.logger.info(f'In update. The world current_state: {theworld.current_state}')
         # Store prev state
         self.prev_state = self.current_state
         self.current_state = theworld.current_state
-        #self.logger.info(f'In update. now prev: {self.prev_state}. Now current {self.current_state}')
         self.reward = theworld.current_reward
         self.score += theworld.current_reward
         self.end = theworld.end
@@ -109,10 +109,11 @@ class q_learning(object):
         """
         try:
             #self.logger.info('Choose action.')
-            die = random.random()
-            decay_rate = np.max( [(self.max_episodes_epsilon - self.episodes) / self.max_episodes_epsilon, 0])
-            self.epsilon = (self.epsilon_start - self.epsilon_end ) * decay_rate + self.epsilon_end
-            if not args.replayfile:
+            if not args.replayfile and not self.eval_mode:
+                die = random.random()
+                # How epsilon decays
+                decay_rate = np.max( [(self.max_episodes_epsilon - self.episodes) / self.max_episodes_epsilon, 0])
+                self.epsilon = (self.epsilon_start - self.epsilon_end ) * decay_rate + self.epsilon_end
                 if die <= self.epsilon:
                     # Random action e-greedy
                     self.logger.info('Choosing random action.')
@@ -127,11 +128,11 @@ class q_learning(object):
                     action = random.choice(indexes)
                     self.logger.info(f'Choosing policy action. Action: {self.actions[action]}. Value: {max_value} from {values_actions}')
             else:
-                # We are in testing mode. Do not randomize the selection of actions. No egreedy
+                # We are in eval mode or replaying a policy. Do not randomize the selection of actions. No egreedy
                 values_actions = self.q_table[self.current_state]
                 max_value = np.max(values_actions)
                 action = np.argmax(values_actions)
-                self.logger.info(f'Choosing policy action. Action: {self.actions[action]}. Value: {max_value} from {values_actions}')
+                self.logger.info(f'Eval mode: Choosing policy action. Action: {self.actions[action]}. Value: {max_value} from {values_actions}')
             
             # Store last action
             self.last_action = action
@@ -149,8 +150,8 @@ class q_learning(object):
         # Update world
         self.update_world(world)
 
-        # If we are replaying, don't learn
-        if not args.replayfile:
+        # If we are replaying or evaluating, don't learn
+        if not args.replayfile and not self.eval_mode:
             try:
                 # To get the value of Q(s', a')
                 # Select the action that maximices the current policy
@@ -179,32 +180,61 @@ class q_learning(object):
         """
         End of episode
         """
-        # Score we got in the last game
-        self.last_episode_scores.append(self.score)
-        self.logger.error(f'Episode score: {self.score}')
-        self.episodes += 1
+        if not args.replayfile and not self.eval_mode:
+            # We are in training mode
+            
+            self.last_episode_scores.append(self.score)
+            self.logger.info(f'Episode ended. Score: {self.score}')
+            self.episodes += 1
 
-        if not args.replayfile:
             # Store best model
-            if self.score > self.best_score:
-                self.logger.critical(f'Saving model of behavioral policy due to best score ever. After {self.episodes} episodes, score was {self.best_score}, and now is {self.score}. Files "{self.behavioral_model_filename}_{str(self.score)}*"')
+            #if self.score > self.best_score:
+                #self.logger.critical(f'Saving model of behavioral policy due to best score ever. After {self.episodes} episodes, score was {self.best_score}, and now is {self.score}. Files "{self.behavioral_model_filename}_{str(self.score)}*"')
                 # Save txt
-                with open(self.behavioral_model_filename + '_' + str(self.score) + '.txt', 'w+') as fi:
-                    fi.write(str(self.q_table))
+                #with open(self.behavioral_model_filename + '_' + str(self.score) + '.txt', 'w+') as fi:
+                    #fi.write(str(self.q_table))
                 # Save npy
-                np.save(self.behavioral_model_filename + '_' + str(self.score) , self.q_table)
-                self.best_score = self.score
+                #np.save(self.behavioral_model_filename + '_' + str(self.score) , self.q_table)
+                #self.best_score = self.score
 
-            if self.episodes % self.n_episodes_evaluate == 0:
+            if self.episodes % self.eval_every_n_episodes == 0:
                 avg_scores = np.average(self.last_episode_scores)
-                self.logger.critical(f'Episodes elapsed: {self.episodes}. Avg Scores in last 100 episodes: {avg_scores:.4f}. Epsilon: {self.epsilon:.5f}. Saving target policy in files "{self.target_model_filename}*"')
+                self.logger.critical(f'Summary of episodes elapsed: {self.episodes}. Avg Scores in last 100 episodes: {avg_scores:.4f}. Epsilon: {self.epsilon:.5f}. Saving.')
                 # Save txt
                 with open(self.target_model_filename + '.txt', 'w+') as fi:
                     fi.write(str(self.q_table))
                 # Save npy
                 np.save(self.target_model_filename, self.q_table)
 
-            self.logger.info('Episode of Agent ended.')
+                # Eval the current policy as test, without random for X episodes
+                self.eval_mode = True
+                self.logger.error(f'Starting Evaluation.')
+                # We are going to do the first eval episode
+                self.eval_episodes += 1
+
+        elif self.eval_mode:
+            # We are in evaluation mode of the current policy
+            self.last_eval_episode_scores.append(self.score)
+            self.logger.error(f'Eval Episode score: {self.score}. Eval Episodes elapsed: {self.eval_episodes}')
+
+            if self.eval_episodes == self.n_episodes_evaluate:
+                # End the evaluation
+
+                avg_scores = np.average(self.last_eval_episode_scores)
+                self.logger.critical(f'Eval episodes elapsed: {self.eval_episodes}. Avg Scores in last {self.n_episodes_evaluate} episodes: {avg_scores:.4f}. Saving.')
+                # Save txt
+                with open(self.eval_model_filename + '.txt', 'w+') as fi:
+                    fi.write(str(self.q_table))
+                # Save npy
+                np.save(self.eval_model_filename, self.q_table)
+
+                # Finished the evalution after some episodes
+                self.eval_mode = False
+                self.eval_episodes = 0
+                self.logger.error(f'Ending Evaluation.')
+            else:
+                self.eval_episodes += 1
+
         # Reset the score to 0
         self.score = 0
 
