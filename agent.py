@@ -93,7 +93,7 @@ class q_learning(object):
         Receive a world
         Return an action
 
-        When the episode finishes, we automatically receive the new world, so 
+        When the episode finishes, we automatically receive the new world, so
         new states are ready.
         """
         # First select an action from the exploratory policy
@@ -130,10 +130,10 @@ class q_learning(object):
                 max_value = np.max(values_actions)
                 action = np.argmax(values_actions)
                 self.logger.info(f'Eval mode: Choosing policy action. Action: {self.actions[action]}. Value: {max_value} from {values_actions}')
-            
+
             # Store last action
             self.last_action = action
-            
+
             action_name = self.actions[action]
             return action_name
         except Exception as e:
@@ -164,10 +164,10 @@ class q_learning(object):
                 self.logger.info(f'\tBefore update. Action Values: {self.q_table[self.prev_state]}.')
                 self.q_table[self.prev_state][self.last_action] = self.q_table[self.prev_state][self.last_action] + (
                                                 self.learning_rate * (
-                                                    self.reward + 
-                                                    (self.gamma * self.q_table[self.current_state][state_action_idx_max_value]) - 
-                                                    self.q_table[self.prev_state][self.last_action] 
-                                                    ) 
+                                                    self.reward +
+                                                    (self.gamma * self.q_table[self.current_state][state_action_idx_max_value]) -
+                                                    self.q_table[self.prev_state][self.last_action]
+                                                    )
                                                 )
                 self.logger.info(f'\tAfter  update. Action Values: {self.q_table[self.prev_state]}.')
             except Exception as e:
@@ -179,7 +179,7 @@ class q_learning(object):
         """
         if not args.replayfile and not self.eval_mode:
             # We are in training mode
-            
+
             self.last_episode_scores.append(self.score)
             self.logger.info(f'Episode ended. Score: {self.score}')
             self.episodes += 1
@@ -358,10 +358,10 @@ def process_data(myworld, data, w):
             for y in range(myworld.size_y):
                 w.addstr(y + minimum_y, x, emoji.emojize(str(myworld.world_positions[x + (y * 10)])))
         # Print score
-        w.addstr(minimum_y + myworld.size_y + 1, 0, f"Reward: {str(myworld.current_reward):>5}") 
-        w.addstr(minimum_y + myworld.size_y + 2, 0, f"Score: {str(myworld.world_score):>5}") 
+        w.addstr(minimum_y + myworld.size_y + 1, 0, f"Reward: {str(myworld.current_reward):>5}")
+        w.addstr(minimum_y + myworld.size_y + 2, 0, f"Score: {str(myworld.world_score):>5}")
 
-      
+
     except Exception as e:
         logging.error(f'Error in process_data: {e}')
 
@@ -381,7 +381,7 @@ def main(w):
 
     Its purpose is to call several other functions to demonstrate
     some of the functionality of curses.
-    
+
     w is the curses window
     """
 
@@ -397,7 +397,7 @@ def main(w):
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((server, port))
-    
+
     # Start the agent
     start_agent(w, sock)
 
