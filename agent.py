@@ -332,8 +332,8 @@ def check_end(myworld):
     if myworld.end:
         # Game end
         logger = logging.getLogger('agent')
-        #logging.info(f'Game ended: Score: {myworld.world_score}')
-        logging.info('Game ended.')
+        #logger.info(f'Game ended: Score: {myworld.world_score}')
+        logger.info('Game ended.')
         myworld.world_score = 0
         return True
 
