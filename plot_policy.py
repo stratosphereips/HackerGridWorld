@@ -28,6 +28,8 @@ if __name__ == '__main__':
         confjson = json.load(jfile)
         w_size = confjson['world']['size_x']
         for obj in confjson['objects']:
+            size_x = confjson['world']['size_x']
+            size_y = confjson['world']['size_y']
             if obj == 'output_gate':
                 gate_x = confjson['objects'][obj]['x']
                 gate_y = confjson['objects'][obj]['y']
@@ -47,6 +49,7 @@ if __name__ == '__main__':
     row = []
     
     for level in q_table:
+        print(f'Level: {level}')
         for i in range(len(q_table[level])):
         # From the end to the start
             q_values = [q_table[level][i][0], q_table[level][i][1], q_table[level][i][2], q_table[level][i][3]]
@@ -62,6 +65,6 @@ if __name__ == '__main__':
                     object_icon = obj_icons[obj]
             #print(f'Position {i}. Adding action {action_choosen} and icon {object_icon}')
             row.append(action_choosen + ' ' + object_icon)
-            if len(row)%10 == 0:
+            if len(row)%size_x == 0:
                 print(row)
                 row = []
