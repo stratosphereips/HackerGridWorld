@@ -59,23 +59,25 @@ class q_learning(object):
 
         # Q-table levels
         # GF stands of Ground Floor. Is the main q_table used when the game starts and it is independent of the 'state' to start
+        self.q_table = {}
         self.current_qtable_level = 'GF'
 
         # If repaly mode, load the model
         if args.replayfile:
             # Load
-            self.q_table = np.load(args.replayfile)
+            self.q_table = np.load(args.replayfile, allow_pickle=True)
+            self.q_table = self.q_table.item()
             # Force no random
             self.epsilon_start = 0
             self.epsilon_end = 0
             self.epsilon = 0
         else:
-            self.initialize_q_table(self.world)
+            self.initialize_q_table(self.current_qtable_level)
 
 
-    def initialize_q_table(self, world):
+    def initialize_q_table(self, level):
         """
-        Init the q table values
+        Init the q table values for the specified qtable level
         """
         # The q_table is a dictionary indexed by the 'state' that was used to 'enter' the table, called here the 'level'.
         # On each position it has a two dimensional vector of X positions of 'states', and each 'state' has a vector of 4 actions
@@ -83,8 +85,11 @@ class q_learning(object):
         # Example
         #  self.q_table = {'GF': [ [0.1, 0.2, 0.3, 0.4] , ... , [0.1, 0.2, 0.3, 0.4] ], '90': [ [0.1, 0.2, 0.3, 0.4] , ... , [0.1, 0.2, 0.3, 0.4] ]}
         #self.q_table = np.zeros((self.world['size_x'] * self.world['size_y'], len(self.actions)))
-        self.q_table = {}
-        self.q_table[self.current_qtable_level] = np.zeros((self.world['size_x'] * self.world['size_y'], len(self.actions)))
+        try:
+            _ = self.q_table[level] 
+        except KeyError:
+            self.logger.info(f'Creating a new q_table level for level {level}')
+            self.q_table[level] = np.zeros((self.world['size_x'] * self.world['size_y'], len(self.actions)))
 
     def update_world(self, theworld):
         """
@@ -159,8 +164,15 @@ class q_learning(object):
         # If we are replaying or evaluating, don't learn
         if not args.replayfile and not self.eval_mode:
             try:
+                # At this point, the transition was already done to the new state. 
+                # But we still didn't update the value of the previous state
+                # self.current_state is the state after the transition
+                # self.prev_state is the state before the transition
+                # self.reward is the reward of the transition
+
                 # To get the value of Q(s', a')
                 # Select the action that maximices the current policy
+                self.logger.info(f'Learning in level {self.current_qtable_level}')
                 values_actions = self.q_table[self.current_qtable_level][self.current_state]
                 max_value = np.max(values_actions)
                 # See if the max value appeared many times, and if yes break ties by choosing randomly between those indexes
@@ -181,6 +193,15 @@ class q_learning(object):
                 self.logger.info(f'\tAfter  update. Action Values: {self.q_table[self.current_qtable_level][self.prev_state]}.')
             except Exception as e:
                 self.logger.error(f'Error in learn: {e}')
+
+        # Update in which level the agent is playing in the qtable
+        if self.reward > 0:
+            # We got some positive reward, so crate/move to the next level
+            # If the level exists already, creation is ignored
+            self.logger.info(f'Reward is {self.reward} and >0 so change to level {self.current_state}')
+            self.initialize_q_table(level=self.current_state)
+            self.current_qtable_level = self.current_state
+
 
     def game_ended(self):
         """
@@ -233,6 +254,8 @@ class q_learning(object):
                 self.logger.error(f'Ending Evaluation.')
             else:
                 self.eval_episodes += 1
+        # Reset to first level
+        self.current_qtable_level = 'GF'
 
         # Reset the score to 0
         self.score = 0
