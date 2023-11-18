@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # Policy plotter for the Hacker Grid World Reinforcement Learning
 # Author: sebastian garcia, eldraco@gmail.com. First commit: Feb 5th 2023
-import os
 import argparse
 import logging
 import numpy as np
